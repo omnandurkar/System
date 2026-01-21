@@ -9,11 +9,16 @@ import { cn } from '@/lib/utils';
 export default function Layout({ children }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const pathname = usePathname();
+    const isAuthPage = ['/login', '/signup'].some(path => pathname?.startsWith(path));
 
     // Close mobile menu when route changes
     useEffect(() => {
         setIsMobileMenuOpen(false);
     }, [pathname]);
+
+    if (isAuthPage) {
+        return <>{children}</>;
+    }
 
     return (
         <div className="flex h-screen overflow-hidden bg-background text-foreground">

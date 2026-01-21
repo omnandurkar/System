@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, CheckSquare, Dumbbell, Utensils, Moon, Shield, LogOut } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Dumbbell, Utensils, Moon, Shield, LogOut, Archive } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { logoutUser } from '@/app/auth-actions';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -13,6 +13,7 @@ const navItems = [
     { name: 'Gym & Box', href: '/gym', icon: Dumbbell },
     { name: 'Fuel', href: '/fuel', icon: Utensils },
     { name: 'Recovery', href: '/recovery', icon: Moon },
+    { name: 'Archives', href: '/history', icon: Archive },
     { name: 'Admin', href: '/admin', icon: Shield },
 ];
 

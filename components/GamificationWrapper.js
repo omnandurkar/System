@@ -2,9 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { LevelUpOverlay } from '@/components/LevelUpOverlay';
+import { DailyCompletionOverlay } from '@/components/DailyCompletionOverlay';
 
-export function GamificationWrapper() {
+export function GamificationWrapper({ totalTasks = 0, completedTasks = 0 }) {
     const [newLevel, setNewLevel] = useState(null);
+    const [showDailyComplete, setShowDailyComplete] = useState(false);
+
+    // Track previous completion to detect the moment of crossing 100%
+    const [prevCompleted, setPrevCompleted] = useState(completedTasks);
 
     useEffect(() => {
         function handleLevelUp(e) {
@@ -15,7 +20,19 @@ export function GamificationWrapper() {
         return () => window.removeEventListener('system-levelup', handleLevelUp);
     }, []);
 
-    if (!newLevel) return null;
+    // Check for Daily Completion (Transition from <100% to 100%)
+    useEffect(() => {
+        // Only trigger if we actually have tasks and just finished them
+        if (totalTasks > 0 && completedTasks === totalTasks && prevCompleted < totalTasks) {
+            setShowDailyComplete(true);
+        }
+        setPrevCompleted(completedTasks);
+    }, [completedTasks, totalTasks]);
 
-    return <LevelUpOverlay newLevel={newLevel} onClose={() => setNewLevel(null)} />;
+    return (
+        <>
+            {newLevel && <LevelUpOverlay newLevel={newLevel} onClose={() => setNewLevel(null)} />}
+            {showDailyComplete && <DailyCompletionOverlay onClose={() => setShowDailyComplete(false)} />}
+        </>
+    );
 }

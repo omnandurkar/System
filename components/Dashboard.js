@@ -1,36 +1,76 @@
-import { getUserStats, getTodayTasks } from '@/app/actions';
+import { getUserStats, getTodayTasks, checkForDungeonBreak } from '@/app/actions';
 import { TaskItem } from '@/components/TaskItem';
 import { AnimatedStats } from '@/components/AnimatedStats';
 import { GamificationWrapper } from '@/components/GamificationWrapper';
 import { CountdownTimer } from '@/components/CountdownTimer';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { BonusQuest } from '@/components/BonusQuest';
+import { RankBadge } from '@/components/RankBadge';
+import { ShopWrapper } from '@/components/ShopWrapper'; // Wrapper for client-side state
+import { DungeonBreakClientWrapper } from '@/components/DungeonBreakClientWrapper';
+import { PlayerStatus } from '@/components/PlayerStatus';
+import { BossRaidWidget } from '@/components/BossRaidWidget';
+
+
+
 
 export default async function Dashboard() {
     const user = await getUserStats();
     const routines = await getTodayTasks();
 
+    // Calculate Task Completion for Gamification
+    let totalTasks = 0;
+    let completedTasks = 0;
+    routines.forEach(r => {
+        r.tasks.forEach(t => {
+            totalTasks++;
+            if (t.completed) completedTasks++;
+        });
+    });
+
     const nextLevelExp = user.level * 1000; // Example logic
     const progress = (user.exp / nextLevelExp) * 100;
 
+    // Trigger Dungeon Check (Server Side)
+    // NOTE: In Next.js Server Components, we can't easily "trigger" simpler side effects without blocking rendering.
+    // Ideally, this check happens via middleware or a specific API route called by the client.
+    // However, for this simplified structure, `getUserStats` already fetches the *Active* break.
+    // We need to call `checkForDungeonBreak()` to potentially *create* one if none exists.
+    let activeBreak = user.dungeonBreak;
+    if (!activeBreak) {
+        // Only try to spawn one if none is active
+        const newBreak = await checkForDungeonBreak();
+        if (newBreak) activeBreak = newBreak;
+    }
+
+
     return (
         <div className="mx-auto max-w-4xl space-y-8 p-4">
-            <GamificationWrapper />
+            <PlayerStatus user={user} />
+            <BossRaidWidget bossRaid={user.bossRaid} totalTasks={totalTasks} completedTasks={completedTasks} />
+            <DungeonBreakClientWrapper initialBreak={activeBreak} /> {/* We need a client wrapper for interactivity */}
+            <GamificationWrapper totalTasks={totalTasks} completedTasks={completedTasks} />
 
             <div className="flex flex-col items-center justify-between gap-4 md:flex-row md:items-start">
-                <div className="space-y-1 text-center md:text-left">
-                    <h1 className="text-3xl font-bold tracking-tighter uppercase sm:text-5xl">
-                        PLAYER: {user.username}
-                    </h1>
+                <div className="space-y-2 text-center md:text-left">
+                    <div className="flex flex-col md:flex-row md:items-center gap-4">
+                        <h1 className="text-3xl font-bold tracking-tighter uppercase sm:text-5xl">
+                            PLAYER: {user.username}
+                        </h1>
+                        <RankBadge level={user.level} />
+                    </div>
                     <p className="font-mono text-sm tracking-widest text-muted-foreground">STATUS: HEALTHY</p>
                 </div>
                 <div className="flex items-center gap-4">
-                    <ThemeToggle />
+                    <ShopWrapper userGold={user.gold || 0} />
                     <CountdownTimer />
                 </div>
             </div>
 
             {/* Header Stats */}
             <AnimatedStats user={user} nextLevelExp={nextLevelExp} progress={progress} />
+
+            {/* Bonus Quests (Random Events) */}
+            <BonusQuest />
 
             {/* Routines Timeline */}
             <div className="space-y-6">

@@ -24,7 +24,7 @@ export function ExerciseManager({ initialExercises, initialDays }) {
     const [dayFormData, setDayFormData] = useState({ name: '', description: '' });
 
     // Helper: Get exercises for a specific day
-    const getExercisesForDay = (dayNum) => exercises.filter(e => e.day_number === dayNum);
+    const getExercisesForDay = (dayNum) => exercises.filter(e => e.day_number == dayNum);
 
     // --- Handlers ---
 
@@ -81,8 +81,26 @@ export function ExerciseManager({ initialExercises, initialDays }) {
             {/* DAY GRID */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-4">
                 {days.map((day) => {
+                    if (!day) return null;
                     const dayExercises = getExercisesForDay(day.day_number);
                     const count = dayExercises.length;
+
+                    // Fainted Neon Colors Map (0=Sun, 1=Mon, etc. or based on day_number if standard)
+                    // Ensuring we map day 0..6 to 7 colors
+                    const COLORS = [
+                        'border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-400', // 1 Mon ?? depends on ID, assuming 1=Mon
+                        'border-orange-500/20 bg-orange-500/5 hover:bg-orange-500/10 text-orange-400',
+                        'border-yellow-500/20 bg-yellow-500/5 hover:bg-yellow-500/10 text-yellow-400',
+                        'border-green-500/20 bg-green-500/5 hover:bg-green-500/10 text-green-400', // 4
+                        'border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 text-blue-400', // 5
+                        'border-indigo-500/20 bg-indigo-500/5 hover:bg-indigo-500/10 text-indigo-400', // 6
+                        'border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 hover:border-purple-500/30 text-purple-400', // 0 Sun / 7
+                    ];
+
+                    // Safe color index calculation
+                    const dayNum = Number(day.day_number);
+                    const colorIndex = ((dayNum - 1) % 7 + 7) % 7;
+                    const colorClass = COLORS[colorIndex] || COLORS[0];
 
                     return (
                         <motion.div
@@ -91,21 +109,23 @@ export function ExerciseManager({ initialExercises, initialDays }) {
                             whileTap={{ scale: 0.98 }}
                             onClick={() => setSelectedDay(day.day_number)}
                             className={cn(
-                                "group relative cursor-pointer rounded-lg border bg-zinc-900/50 p-6 md:p-6 transition-all hover:bg-zinc-800 hover:border-zinc-700 active:scale-95 touch-manipulation",
-                                selectedDay === day.day_number ? "border-white bg-zinc-800 ring-1 ring-white" : "border-zinc-800"
+                                "group relative cursor-pointer rounded-lg border p-6 md:p-6 transition-all active:scale-95 touch-manipulation",
+                                colorClass,
+                                // Selected state override
+                                selectedDay === day.day_number ? "ring-1 ring-white bg-opacity-20" : ""
                             )}
                         >
 
 
                             <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-mono text-zinc-500">DAY {day.day_number === 0 ? 7 : day.day_number}</span>
-                                <Calendar className="h-4 w-4 text-zinc-600" />
+                                <span className={cn("text-xs font-mono font-bold opacity-70", "text-inherit")}>DAY {day.day_number === 0 ? 7 : day.day_number}</span>
+                                <Calendar className="h-4 w-4 opacity-50" />
                             </div>
-                            <h3 className="font-bold text-lg text-white tracking-tight">{day.name}</h3>
-                            <p className="text-xs text-zinc-400 font-mono mt-1 uppercase">{day.description}</p>
+                            <h3 className={cn("font-bold text-lg tracking-tight", "text-zinc-100")}>{day.name}</h3>
+                            <p className="text-xs font-mono mt-1 uppercase opacity-70">{day.description}</p>
 
                             <div className="mt-4 flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-xs text-zinc-500">
+                                <div className="flex items-center gap-2 text-xs opacity-70">
                                     <Dumbbell className="h-3 w-3" />
                                     <span>{count} PROTOCOLS</span>
                                 </div>

@@ -10,14 +10,17 @@ export async function getAllRoutinesAndTasks() {
 
     const client = await pool.connect();
     try {
+        // Corrected Column: days_mask (not repeat_days)
         const res = await client.query(`
       SELECT r.id as routine_id, r.name as routine_name, r.start_time, r.end_time,
-             t.id as task_id, t.title, t.exp_value
+             t.id as task_id, t.title, t.exp_value, t.days_mask
       FROM routines r
       LEFT JOIN tasks t ON t.routine_id = r.id
       WHERE r.user_id = $1
       ORDER BY r.start_time, t.id
     `, [session.userId]);
+
+        const DAY_MAP = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
         // Grouping
         const data = {};
@@ -31,10 +34,22 @@ export async function getAllRoutinesAndTasks() {
                 };
             }
             if (row.task_id) {
+                // Convert days_mask string (e.g. "1111111") -> Array of Days (e.g. ["Mon", "Tue", ...])
+                let days = [];
+                if (row.days_mask && row.days_mask.length === 7) {
+                    days = row.days_mask.split('').map((char, index) => {
+                        return char === '1' ? DAY_MAP[index] : null;
+                    }).filter(Boolean);
+                } else {
+                    // Fallback if null (though schema says default '1111111')
+                    days = DAY_MAP;
+                }
+
                 data[row.routine_id].tasks.push({
                     id: row.task_id,
                     title: row.title,
-                    exp: row.exp_value
+                    exp: row.exp_value,
+                    repeatDays: days
                 });
             }
         });
