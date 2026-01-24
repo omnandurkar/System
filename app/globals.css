@@ -61,4 +61,76 @@
   .glass-card {
     @apply bg-zinc-900/50 border border-zinc-800 shadow-sm backdrop-blur-sm;
   }
+
+  /* 3+ Day Streak: Blue Outline Pulse injected via Body Class */
+  body.streak-active-3 .glass-card {
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.1);
+    animation: bluePulse 4s infinite ease-in-out;
+    border-color: rgba(59, 130, 246, 0.2);
+  }
+
+  /* 3+ Day Streak: Blue Outline Pulse */
+  .streak-aura-blue {
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.1);
+    animation: bluePulse 3s infinite ease-in-out;
+  }
+
+  @keyframes bluePulse {
+
+    0%,
+    100% {
+      box-shadow: 0 0 5px rgba(59, 130, 246, 0.1);
+      border-color: rgba(59, 130, 246, 0.1);
+    }
+
+    50% {
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+      border-color: rgba(59, 130, 246, 0.3);
+    }
+  }
+
+  /* 7+ Day Streak: Smoke Effect */
+  /* This will be handled by a mask or overlay in JS/CSS */
+
+  /* 30+ Day Streak: Shadow Monarch Flames */
+  .flame-bg {
+    background: radial-gradient(circle at 50% 100%, #1e1b4b, #000000 60%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .flame-bg::before {
+    content: "";
+    position: absolute;
+    bottom: -50px;
+    left: 0;
+    width: 100%;
+    height: 300px;
+    background: url('https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDdvMHd6NHR6NHR6NHR6NHR6NHR6NHR6NHR6NHR6NHR6b3/3o7TKr3nzbh5WgCFxe/giphy.gif');
+    /* Placeholder Texture - actually we should generate with noise or SVG */
+    /* Better pure CSS approach for flames */
+    background: linear-gradient(0deg, rgba(88, 28, 135, 0.4) 0%, transparent 80%);
+    filter: blur(20px);
+    animation: flameRise 4s infinite linear;
+    opacity: 0.6;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  @keyframes flameRise {
+    0% {
+      transform: translateY(0) scaleY(1);
+      opacity: 0.5;
+    }
+
+    50% {
+      transform: translateY(-20px) scaleY(1.1);
+      opacity: 0.8;
+    }
+
+    100% {
+      transform: translateY(0) scaleY(1);
+      opacity: 0.5;
+    }
+  }
 }

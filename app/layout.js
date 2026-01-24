@@ -13,7 +13,11 @@ export const metadata = {
   description: "Daily Protocol",
 };
 
-export default function RootLayout({ children }) {
+import { getUserStats } from "@/app/actions";
+
+export default async function RootLayout({ children }) {
+  const user = await getUserStats();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${jetbrainsMono.variable} font-mono`}>
@@ -23,7 +27,7 @@ export default function RootLayout({ children }) {
           enableSystem
           disableTransitionOnChange
         >
-          <Layout>{children}</Layout>
+          <Layout user={user}>{children}</Layout>
         </ThemeProvider>
       </body>
     </html>

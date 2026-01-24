@@ -9,6 +9,11 @@ import { ShopWrapper } from '@/components/ShopWrapper'; // Wrapper for client-si
 import { DungeonBreakClientWrapper } from '@/components/DungeonBreakClientWrapper';
 import { PlayerStatus } from '@/components/PlayerStatus';
 import { BossRaidWidget } from '@/components/BossRaidWidget';
+import { PenaltyOverlay } from '@/components/PenaltyOverlay';
+import { TitleSelector } from '@/components/TitleSelector';
+import { getTitles } from '@/app/actions';
+import { LevelUpModal } from '@/components/LevelUpModal';
+import { SystemWhisper } from '@/components/SystemWhisper';
 
 
 
@@ -16,6 +21,7 @@ import { BossRaidWidget } from '@/components/BossRaidWidget';
 export default async function Dashboard() {
     const user = await getUserStats();
     const routines = await getTodayTasks();
+    const userTitles = await getTitles();
 
     // Calculate Task Completion for Gamification
     let totalTasks = 0;
@@ -45,6 +51,9 @@ export default async function Dashboard() {
 
     return (
         <div className="mx-auto max-w-4xl space-y-8 p-4">
+            <LevelUpModal />
+            <SystemWhisper />
+            <PenaltyOverlay user={user} routines={routines} />
             <PlayerStatus user={user} />
             <BossRaidWidget bossRaid={user.bossRaid} totalTasks={totalTasks} completedTasks={completedTasks} />
             <DungeonBreakClientWrapper initialBreak={activeBreak} /> {/* We need a client wrapper for interactivity */}
@@ -53,12 +62,22 @@ export default async function Dashboard() {
             <div className="flex flex-col items-center justify-between gap-4 md:flex-row md:items-start">
                 <div className="space-y-2 text-center md:text-left">
                     <div className="flex flex-col md:flex-row md:items-center gap-4">
-                        <h1 className="text-3xl font-bold tracking-tighter uppercase sm:text-5xl">
-                            PLAYER: {user.username}
-                        </h1>
+                        <div className="flex flex-col">
+                            {user.current_title && (
+                                <span className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-1 self-start">
+                                    {user.current_title}
+                                </span>
+                            )}
+                            <h1 className="text-3xl font-bold tracking-tighter uppercase sm:text-5xl">
+                                PLAYER: {user.username}
+                            </h1>
+                        </div>
                         <RankBadge level={user.level} />
                     </div>
-                    <p className="font-mono text-sm tracking-widest text-muted-foreground">STATUS: HEALTHY</p>
+                    <div className="flex items-center gap-4">
+                        <p className="font-mono text-sm tracking-widest text-muted-foreground">STATUS: HEALTHY</p>
+                        <TitleSelector userTitles={userTitles} currentTitle={user.current_title} />
+                    </div>
                 </div>
                 <div className="flex items-center gap-4">
                     <ShopWrapper userGold={user.gold || 0} />

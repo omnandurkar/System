@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Zap } from 'lucide-react';
-import { addXP } from '@/app/actions';
+import { addXP, awardMysteryBox } from '@/app/actions';
 import confetti from 'canvas-confetti';
 import { cn } from '@/lib/utils';
 
@@ -12,9 +12,8 @@ const QUEST_POOL = [
     { title: "Hydration Check", desc: "Drink 500ml of water immediately.", xp: 50 },
     { title: "Posture Correction", desc: "Sit up straight. Hold it for 5 minutes.", xp: 50 },
     { title: "Mental Reset", desc: "Close your eyes and take 10 deep breaths.", xp: 75 },
-    { title: "Mobility: Touching Toes", desc: "Stand up and touch your toes. Hold for 30s.", xp: 50 },
-    { title: "Vision Check", desc: "Look at something 20 feet away for 20 seconds.", xp: 25 },
-    { title: "Plank Challenge", desc: "Hold a plank for 60 seconds.", xp: 120 },
+    { title: "Kryptonian Strength", desc: "Do 10 Superman Pushups.", xp: 150 },
+    { title: "Iron Core", desc: "Hold a plank for 2 minutes.", xp: 200 },
     { title: "Shadow Boxing", desc: "Perform shadow boxing for 1 minute.", xp: 80 },
     { title: "Gratitude Log", desc: "Think of 3 things you are grateful for.", xp: 40 },
     { title: "Cold Splash", desc: "Splash cold water on your face.", xp: 60 }
@@ -66,6 +65,8 @@ export function BonusQuest() {
         }
     }, []);
 
+    const [loot, setLoot] = useState(null);
+
     const handleToggle = async () => {
         if (!quest || loading) return;
         setLoading(true);
@@ -75,6 +76,7 @@ export function BonusQuest() {
 
         // Update Local Storage immediately
         const today = new Date().toISOString().split('T')[0];
+        // Note: We don't save Loot state to persistence, just completion
         const data = {
             date: today,
             quest: quest,
@@ -84,7 +86,7 @@ export function BonusQuest() {
 
         try {
             if (newCompleted) {
-                // Complete: Add XP & Confetti
+                // Complete: Add XP & Confetti & Mystery Box
                 confetti({
                     particleCount: 100,
                     spread: 70,
@@ -94,11 +96,19 @@ export function BonusQuest() {
 
                 const result = await addXP(quest.xp);
                 if (result && result.leveledUp) {
-                    window.dispatchEvent(new CustomEvent('system-levelup', { detail: { level: result.newLevel } }));
+                    window.dispatchEvent(new CustomEvent('sys_level_up', { detail: { level: result.newLevel } }));
                 }
+
+                // Award Mystery Box
+                const boxResult = await awardMysteryBox(); // Helper to import below
+                if (boxResult.success) {
+                    setLoot(boxResult.message);
+                }
+
             } else {
-                // Uncomplete: Remove XP
+                // Uncomplete: Remove XP (Warning: Rolling back mystery box is hard, let's just deduct base XP)
                 await addXP(-quest.xp);
+                setLoot(null);
             }
         } catch (error) {
             console.error("Failed to update XP", error);
@@ -107,7 +117,7 @@ export function BonusQuest() {
         } finally {
             setLoading(false);
             if (newCompleted) {
-                setTimeout(() => setIsVisible(false), 5000); // 5 sec delay to hide if completed
+                setTimeout(() => setIsVisible(false), 8000); // Extended delay to see loot
             }
         }
     };
@@ -169,7 +179,11 @@ export function BonusQuest() {
                             )}
                         >
                             {completed ?
-                                <Check className="h-8 w-8" /> :
+                                <div className="flex flex-col items-center">
+                                    <Check className="h-8 w-8" />
+                                    {loot && <span className="absolute -bottom-8 w-32 text-center text-[10px] font-mono text-yellow-400 bg-black/80 px-2 py-1 rounded animate-bounce">{loot}</span>}
+                                </div>
+                                :
                                 <div className="flex flex-col items-center z-10">
                                     <span className="text-[10px] font-bold opacity-80">RWD</span>
                                     <span className="text-sm font-black">{quest.xp}</span>

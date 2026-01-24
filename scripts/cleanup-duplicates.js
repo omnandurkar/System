@@ -6,20 +6,37 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false }
 });
 
-async function cleanup() {
+async function cleanupDuplicates() {
     const client = await pool.connect();
     try {
-        console.log('Cleaning up duplicate task completions...');
+        console.log('--- CLEANING DUPLICATES ---');
 
-        // Remove duplicates, keeping the first one
-        await client.query(`
-            DELETE FROM task_completions a USING task_completions b
-            WHERE a.id > b.id 
-            AND a.daily_log_id = b.daily_log_id 
-            AND a.task_id = b.task_id;
+        // 1. Get IDs to Keep (Min ID for each category)
+        const keepRes = await client.query(`
+            SELECT MIN(id) as keep_id, category 
+            FROM routines 
+            WHERE category IN ('weekend_chores', 'boss_raid')
+            GROUP BY category
         `);
 
-        console.log('Done.');
+        const keepIds = keepRes.rows.map(r => r.keep_id);
+        console.log('Keeping Routine IDs:', keepIds);
+
+        if (keepIds.length === 0) {
+            console.log("No routines found to clean.");
+            return;
+        }
+
+        // 2. Delete the rest
+        const delRes = await client.query(`
+            DELETE FROM routines 
+            WHERE category IN ('weekend_chores', 'boss_raid')
+            AND id NOT IN (${keepIds.join(',')})
+            RETURNING id, name
+        `);
+
+        console.log(`Deleted ${delRes.rowCount} duplicate routines:`, delRes.rows);
+
     } catch (e) {
         console.error(e);
     } finally {
@@ -28,4 +45,4 @@ async function cleanup() {
     }
 }
 
-cleanup();
+cleanupDuplicates();

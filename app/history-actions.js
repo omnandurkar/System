@@ -33,7 +33,7 @@ export async function getHistoryData() {
             JOIN daily_logs dl ON tc.daily_log_id = dl.id
             JOIN tasks t ON tc.task_id = t.id
             WHERE dl.user_id = $1
-            AND dl.date > (CURRENT_DATE - INTERVAL '90 days')
+            AND dl.date > ((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date - INTERVAL '90 days')
             ORDER BY dl.date DESC, t.id
         `, [session.userId]);
 
@@ -44,7 +44,7 @@ export async function getHistoryData() {
             JOIN gym_exercises ge ON gl.exercise_id = ge.id
             WHERE gl.user_id = $1
             AND gl.completed = TRUE
-            AND gl.log_date > (CURRENT_DATE - INTERVAL '90 days')
+            AND gl.log_date > ((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date - INTERVAL '90 days')
             ORDER BY gl.log_date DESC
         `, [session.userId]);
 
@@ -54,6 +54,69 @@ export async function getHistoryData() {
             tasks: taskCompletions.rows,
             gymLogs: gymLogs.rows
         };
+    } finally {
+        client.release();
+    }
+}
+
+export async function getSystemLogs() {
+    const session = await getSession();
+    if (!session) return [];
+
+    const client = await pool.connect();
+    try {
+        const usernameRes = await client.query('SELECT username FROM users WHERE id = $1', [session.userId]);
+        const username = usernameRes.rows[0].username || 'ADMIN';
+
+        const logsRes = await client.query(`
+            SELECT * FROM (
+                -- 1. Tasks
+                SELECT 
+                    tc.completed_at as timestamp,
+                    'TASK' as type,
+                    'Player [' || $2 || '] completed [' || t.title || ']. Reward: ' || t.exp_value || ' XP.' as message
+                FROM task_completions tc
+                JOIN tasks t ON tc.task_id = t.id
+                JOIN daily_logs dl ON tc.daily_log_id = dl.id
+                WHERE dl.user_id = $1 AND tc.completed_at IS NOT NULL
+
+                UNION ALL
+
+                -- 2. Dungeon Breaks
+                SELECT 
+                    created_at as timestamp,
+                    'DUNGEON' as type,
+                    'Player [' || $2 || '] encountered [' || description || ']. Status: ' || status || '.' as message
+                FROM dungeon_breaks
+                WHERE user_id = $1
+
+                UNION ALL
+
+                -- 3. Gym Logs
+                SELECT
+                    (log_date || ' 00:00:00')::timestamp as timestamp,
+                    'GYM' as type,
+                    'Player [' || $2 || '] performed [' || ge.exercise_name || '] - ' || ge.sets_reps as message
+                FROM gym_logs gl
+                JOIN gym_exercises ge ON gl.exercise_id = ge.id
+                WHERE gl.user_id = $1 AND gl.completed = TRUE
+
+                UNION ALL
+
+                -- 4. Titles (If applicable)
+                SELECT
+                    unlocked_at as timestamp,
+                    'ACHIEVEMENT' as type,
+                    'Player [' || $2 || '] unlocked title [' || title_id || '].' as message
+                FROM user_titles
+                WHERE user_id = $1
+
+            ) combined_logs
+            ORDER BY timestamp DESC
+            LIMIT 100
+        `, [session.userId, username]);
+
+        return logsRes.rows;
     } finally {
         client.release();
     }

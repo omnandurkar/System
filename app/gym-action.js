@@ -11,7 +11,7 @@ export async function getTodaysWorkout() {
 
     const client = await pool.connect();
     try {
-        const today = new Date();
+        const today = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
         const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon...
 
         // Logic: Mon=1 ... Fri=5. Sat=6(Rest), Sun=7(Cardio/Rest)
@@ -35,7 +35,7 @@ export async function getTodaysWorkout() {
                 FROM gym_exercises ge
                 LEFT JOIN gym_logs gl ON gl.exercise_id = ge.id 
                                       AND gl.user_id = $1 
-                                      AND gl.log_date = CURRENT_DATE
+                                      AND gl.log_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
                 WHERE ge.day_number = $2
                 ORDER BY ge.id ASC
             `, [session.userId, dayNum]);
@@ -75,7 +75,7 @@ export async function toggleGymExercise(exerciseId, completed) {
         // 2. Upsert Log
         await client.query(`
             INSERT INTO gym_logs (user_id, exercise_id, log_date, completed)
-            VALUES ($1, $2, CURRENT_DATE, $3)
+            VALUES ($1, $2, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $3)
             ON CONFLICT (user_id, exercise_id, log_date)
             DO UPDATE SET completed = $3
         `, [session.userId, exerciseId, completed]);
@@ -84,7 +84,7 @@ export async function toggleGymExercise(exerciseId, completed) {
         // We only check exercises of the SAME CATEGORY for today's day number.
 
         // Find today's day number logic again
-        const today = new Date();
+        const today = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
         const dayOfWeek = today.getDay();
         let dayNum = (dayOfWeek >= 1 && dayOfWeek <= 5) ? dayOfWeek : 0;
 
@@ -106,7 +106,7 @@ export async function toggleGymExercise(exerciseId, completed) {
             FROM gym_exercises ge
             LEFT JOIN gym_logs gl ON gl.exercise_id = ge.id 
                                   AND gl.user_id = $1 
-                                  AND gl.log_date = CURRENT_DATE
+                                  AND gl.log_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
             WHERE ge.day_number = $2
             AND (ge.category = $3 OR (ge.category IS NULL AND $3 = 'WEIGHTS'))
             AND (gl.completed IS NULL OR gl.completed = FALSE)

@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { AppSidebar } from '@/components/AppSidebar';
+import { AuraEffects } from '@/components/AuraEffects';
 import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function Layout({ children }) {
+export default function Layout({ children, user }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const pathname = usePathname();
     const isAuthPage = ['/login', '/signup'].some(path => pathname?.startsWith(path));
@@ -20,11 +21,16 @@ export default function Layout({ children }) {
         return <>{children}</>;
     }
 
+    const streak = user?.current_streak || 0;
+    const bestStreak = user?.best_streak || 0;
+
     return (
         <div className="flex h-screen overflow-hidden bg-background text-foreground">
+            <AuraEffects streak={streak} bestStreak={bestStreak} />
+
             {/* Desktop Sidebar - Strictly hidden on mobile, visible on desktop */}
             <aside className="hidden md:block w-64 shrink-0 border-r border-zinc-800">
-                <AppSidebar />
+                <AppSidebar streak={streak} />
             </aside>
 
             {/* Mobile Drawer Overlay - Strictly hidden on desktop */}
@@ -58,7 +64,7 @@ export default function Layout({ children }) {
 
                         {/* Sidebar Content */}
                         <div className="flex-1 overflow-y-auto py-2">
-                            <AppSidebar onNavigate={() => setIsMobileMenuOpen(false)} />
+                            <AppSidebar streak={streak} onNavigate={() => setIsMobileMenuOpen(false)} />
                         </div>
                     </div>
                 </div>
