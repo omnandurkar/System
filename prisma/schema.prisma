@@ -1,0 +1,187 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int      @id @default(autoincrement())
+  username       String   @unique @db.VarChar(50)
+  password       String   @db.VarChar(255)
+  level          Int      @default(1)
+  exp            Int      @default(0)
+  hp             Int      @default(100)
+  maxHp          Int      @default(100) @map("max_hp")
+  fatigue        Int      @default(0)
+  maxFatigue     Int      @default(100) @map("max_fatigue")
+  gold           Int      @default(0)
+  strength       Int      @default(1)
+  intelligence   Int      @default(1)
+  vitality       Int      @default(1)
+  statPoints     Int      @default(0) @map("stat_points")
+  currentStreak  Int      @default(0) @map("current_streak")
+  bestStreak     Int      @default(0) @map("best_streak")
+  lastActiveDate DateTime? @map("last_active_date") @db.Date
+  currentTitle   String?   @map("current_title") @db.VarChar(100)
+  createdAt      DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+
+  routines       Routine[]
+  dailyLogs      DailyLog[]
+  dungeonBreaks  DungeonBreak[]
+  userTitles     UserTitle[]
+  systemWhispers SystemWhisper[]
+  gymLogs        GymLog[]
+
+  @@map("users")
+}
+
+model Routine {
+  id        Int     @id @default(autoincrement())
+  userId    Int?    @map("user_id")
+  name      String  @db.VarChar(50)
+  startTime String? @map("start_time") @db.VarChar(10)
+  endTime   String? @map("end_time") @db.VarChar(10)
+  category  String? @db.VarChar(20)
+
+  user  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  @@map("routines")
+}
+
+model Task {
+  id          Int     @id @default(autoincrement())
+  routineId   Int?    @map("routine_id")
+  title       String  @db.VarChar(255)
+  description String?
+  expValue    Int?    @default(10) @map("exp_value")
+  targetValue Int?    @default(1) @map("target_value")
+  unit        String? @db.VarChar(20)
+  daysMask    String? @default("1111111") @map("days_mask") @db.VarChar(7)
+  isHardcoded Boolean? @default(false) @map("is_hardcoded")
+
+  routine         Routine?         @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  taskCompletions TaskCompletion[]
+
+  @@map("tasks")
+}
+
+model GymExercise {
+  id           Int     @id @default(autoincrement())
+  dayNumber    Int?    @map("day_number")
+  dayName      String? @map("day_name") @db.VarChar(50)
+  exerciseName String? @map("exercise_name") @db.VarChar(255)
+  setsReps     String? @map("sets_reps") @db.VarChar(100)
+  category     String? @db.VarChar(50) // Added based on app/gym-action.js usage
+
+  // Note: GymLog relation is inferred based on app usage, but table might not have explicit FK in original setup?
+  // gym_logs table referenced in app/gym-action.js but not fully seen in setup-db.js output I saw earlier (it was truncated or I missed it? Wait, let me check provided file content for setup-db.js)
+  // Re-checking setup-db.js content provided in Turn 4...
+  // Line 101 starts "Tracking Logs" (daily_logs).
+  // Line 22: DROP TABLE IF EXISTS gym_exercises
+  // Line 90: CREATE TABLE gym_exercises
+  // Wait, I don't see `gym_logs` creation in `setup-db.js` provided in step 25.
+  // BUT `app/gym-action.js` does `INSERT INTO gym_logs`.
+  // It must be created in another script or I missed it.
+  // File `scripts/add-gym-logs.js` exists. It likely creates that table.
+  // I should check `scripts/add-gym-logs.js` to define GymLog model correctly.
+  
+  gymLogs GymLog[]
+
+  @@map("gym_exercises")
+}
+
+
+model GymLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  exerciseId Int      @map("exercise_id")
+  logDate    DateTime @default(dbgenerated("CURRENT_DATE")) @map("log_date") @db.Date
+  completed  Boolean? @default(false)
+
+  exercise GymExercise @relation(fields: [exerciseId], references: [id], onDelete: NoAction)
+  user     User        @relation(fields: [userId], references: [id], onDelete: NoAction)
+
+  @@unique([userId, exerciseId, logDate])
+  @@map("gym_logs")
+}
+
+model DailyLog {
+  id              Int              @id @default(autoincrement())
+  userId          Int?             @map("user_id")
+  date            DateTime         @db.Date
+  totalExpGained  Int?             @default(0) @map("total_exp_gained")
+  notes           String?
+  
+  user            User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskCompletions TaskCompletion[]
+
+  @@unique([userId, date])
+  @@map("daily_logs")
+}
+
+model TaskCompletion {
+  id          Int       @id @default(autoincrement())
+  dailyLogId  Int?      @map("daily_log_id")
+  taskId      Int?      @map("task_id")
+  progress    Int?      @default(0)
+  completedAt DateTime? @default(now()) @map("completed_at") @db.Timestamp(6)
+
+  dailyLog DailyLog? @relation(fields: [dailyLogId], references: [id], onDelete: Cascade)
+  task     Task?     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_completions")
+}
+
+model DungeonBreak {
+  id          Int      @id @default(autoincrement())
+  userId      Int?     @map("user_id")
+  description String
+  xpReward    Int      @map("xp_reward")
+  penaltyHp   Int      @map("penalty_hp")
+  expiresAt   DateTime @map("expires_at") @db.Timestamp(6)
+  status      String?  @default("ACTIVE") @db.VarChar(20)
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: NoAction)
+
+  @@map("dungeon_breaks")
+}
+
+model UserTitle {
+  id         Int       @id @default(autoincrement())
+  userId     Int?      @map("user_id")
+  titleId    String    @map("title_id") @db.VarChar(50)
+  unlockedAt DateTime? @default(now()) @map("unlocked_at") @db.Timestamp(6)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: NoAction)
+
+  @@unique([userId, titleId])
+  @@map("user_titles")
+}
+
+model SystemWhisper {
+  id          Int      @id @default(autoincrement())
+  userId      Int?     @map("user_id")
+  type        String   @db.VarChar(50)
+  message     String
+  targetValue String?  @map("target_value") @db.VarChar(50) // Assuming string based on schema provided, though verified as varchar(50) in setup-db.js
+  createdAt   DateTime? @default(dbgenerated("CURRENT_DATE")) @map("created_at") @db.Date 
+  status      String?  @default("ACTIVE") @db.VarChar(20)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: NoAction)
+
+  @@unique([userId, createdAt])
+  @@map("system_whispers")
+}
+
+model GymDay {
+  dayNumber   Int     @id @map("day_number")
+  name        String
+  description String?
+
+  @@map("gym_days")
+}
