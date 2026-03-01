@@ -1,6 +1,6 @@
 'use server';
 
-import pool from '@/lib/db';
+import prisma from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
@@ -8,54 +8,50 @@ export async function getAllRoutinesAndTasks() {
     const session = await getSession();
     if (!session) return [];
 
-    const client = await pool.connect();
     try {
-        // Corrected Column: days_mask (not repeat_days)
-        const res = await client.query(`
-      SELECT r.id as routine_id, r.name as routine_name, r.start_time, r.end_time,
-             t.id as task_id, t.title, t.exp_value, t.days_mask
-      FROM routines r
-      LEFT JOIN tasks t ON t.routine_id = r.id
-      WHERE r.user_id = $1
-      ORDER BY r.start_time, t.id
-    `, [session.userId]);
+        const routines = await prisma.routine.findMany({
+            where: { userId: session.userId },
+            include: {
+                tasks: {
+                    orderBy: { id: 'asc' }
+                }
+            },
+            orderBy: { startTime: 'asc' }
+        });
 
         const DAY_MAP = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-        // Grouping
-        const data = {};
-        res.rows.forEach(row => {
-            if (!data[row.routine_id]) {
-                data[row.routine_id] = {
-                    id: row.routine_id,
-                    name: row.routine_name,
-                    time: `${row.start_time} - ${row.end_time}`,
-                    tasks: []
-                };
-            }
-            if (row.task_id) {
-                // Convert days_mask string (e.g. "1111111") -> Array of Days (e.g. ["Mon", "Tue", ...])
+        const data = routines.map(r => {
+            const tasksList = r.tasks.map(t => {
                 let days = [];
-                if (row.days_mask && row.days_mask.length === 7) {
-                    days = row.days_mask.split('').map((char, index) => {
+                if (t.daysMask && t.daysMask.length === 7) {
+                    days = t.daysMask.split('').map((char, index) => {
                         return char === '1' ? DAY_MAP[index] : null;
                     }).filter(Boolean);
                 } else {
-                    // Fallback if null (though schema says default '1111111')
                     days = DAY_MAP;
                 }
 
-                data[row.routine_id].tasks.push({
-                    id: row.task_id,
-                    title: row.title,
-                    exp: row.exp_value,
+                return {
+                    id: t.id,
+                    title: t.title,
+                    exp: t.expValue,
                     repeatDays: days
-                });
-            }
+                };
+            });
+
+            return {
+                id: r.id,
+                name: r.name,
+                time: `${r.startTime} - ${r.endTime}`,
+                tasks: tasksList
+            };
         });
-        return Object.values(data);
-    } finally {
-        client.release();
+
+        return data;
+    } catch (e) {
+        console.error(e);
+        return [];
     }
 }
 
@@ -63,30 +59,30 @@ export async function updateTask(taskId, title, exp) {
     const session = await getSession();
     if (!session) return { success: false };
 
-    // TODO: Add verification that task belongs to user (implicitly handled by UI flow, but good for security)
-
-    const client = await pool.connect();
     try {
-        // Verify ownership
-        const taskCheck = await client.query(`
-        SELECT t.id 
-        FROM tasks t
-        JOIN routines r ON t.routine_id = r.id
-        WHERE t.id = $1 AND r.user_id = $2
-    `, [taskId, session.userId]);
+        const taskCheck = await prisma.task.findFirst({
+            where: {
+                id: taskId,
+                routine: {
+                    userId: session.userId
+                }
+            }
+        });
 
-        if (taskCheck.rows.length === 0) {
+        if (!taskCheck) {
             return { success: false, error: 'Unauthorized' };
         }
 
-        await client.query('UPDATE tasks SET title = $1, exp_value = $2 WHERE id = $3', [title, exp, taskId]);
+        await prisma.task.update({
+            where: { id: taskId },
+            data: { title, expValue: exp }
+        });
+
         revalidatePath('/');
         revalidatePath('/admin');
         return { success: true };
     } catch (e) {
         console.error(e);
         return { success: false };
-    } finally {
-        client.release();
     }
 }
