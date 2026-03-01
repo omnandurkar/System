@@ -11,10 +11,15 @@ export async function logRecovery(data) {
 
     const { bedTime, wakeTime, sleepDuration, soreness, stress, hadDream, dreamLog } = data;
 
+    // Safe Parsing
+    const safeSleep = parseFloat(sleepDuration) || 0;
+    const safeSoreness = parseFloat(soreness) || 0;
+    const safeStress = parseFloat(stress) || 0;
+
     // Algorithm Update: Use the calculated duration instead of manual input
-    const sleepScore = Math.min((sleepDuration / 8) * 50, 50);
-    const sorenessScore = ((10 - soreness) / 10) * 25;
-    const stressScore = ((10 - stress) / 10) * 25;
+    const sleepScore = Math.min((safeSleep / 8) * 50, 50);
+    const sorenessScore = ((10 - safeSoreness) / 10) * 25;
+    const stressScore = ((10 - safeStress) / 10) * 25;
 
     const totalScore = Math.round(sleepScore + sorenessScore + stressScore);
 
@@ -41,7 +46,7 @@ export async function logRecovery(data) {
                 sleep_hours = $2, soreness_level = $3, stress_level = $4, recovery_score = $5,
                 bed_time = $6, wake_time = $7, had_dream = $8, dream_log = $9
         `, [
-            session.userId, sleepDuration, soreness, stress, totalScore,
+            session.userId, safeSleep, safeSoreness, safeStress, totalScore,
             bedTimestamp, wakeTimestamp, hadDream, dreamLog
         ]);
 

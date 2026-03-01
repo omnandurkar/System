@@ -169,18 +169,27 @@ export async function getTodayTasks() {
         const sortedRoutines = routinesData.filter(r => isWeekend && r.category === 'work' ? false : true)
             .sort((a, b) => (routineOrder[a.category] || 5) - (routineOrder[b.category] || 5));
 
-        return sortedRoutines.map(r => ({
-            id: r.id, name: r.name, time: `${r.startTime} - ${r.endTime}`, category: r.category,
-            tasks: r.tasks.map(t => {
-                const comp = t.taskCompletions[0];
-                return {
-                    id: t.id, title: t.title, exp: t.expValue,
-                    completed: !!(comp && comp.completedAt),
-                    isGym: t.title.toLowerCase().includes('gym') || t.title.toLowerCase().includes('boxing'),
-                    target: t.targetValue || 1, unit: t.unit, progress: comp ? comp.progress : 0
-                };
-            })
-        }));
+        return sortedRoutines.map(r => {
+            let filteredTasks = r.tasks;
+            if (isWeekend) {
+                filteredTasks = filteredTasks.filter(t => {
+                    const titleUpper = t.title.toUpperCase();
+                    return !(titleUpper.includes('GYM') || titleUpper.includes('BOXING'));
+                });
+            }
+            return {
+                id: r.id, name: r.name, time: `${r.startTime} - ${r.endTime}`, category: r.category,
+                tasks: filteredTasks.map(t => {
+                    const comp = t.taskCompletions[0];
+                    return {
+                        id: t.id, title: t.title, exp: t.expValue,
+                        completed: !!(comp && comp.completedAt),
+                        isGym: t.title.toLowerCase().includes('gym') || t.title.toLowerCase().includes('boxing'),
+                        target: t.targetValue || 1, unit: t.unit, progress: comp ? comp.progress : 0
+                    };
+                })
+            };
+        });
     } catch (e) {
         console.error(e);
         return [];
@@ -237,20 +246,74 @@ async function _revertTaskCompletion(tx, userId, taskId, logId) {
 }
 
 async function checkAchievements(tx, userId) {
+    const newUnlocks = [];
+
+    // 1. IRON BODY
     const gymCount = await tx.taskCompletion.count({
         where: {
-            task: { title: { contains: 'Gym', mode: 'insensitive' } },
+            task: {
+                OR: [
+                    { title: { contains: 'Gym', mode: 'insensitive' } },
+                    { title: { contains: 'Workout', mode: 'insensitive' } },
+                    { title: { contains: 'Pushup', mode: 'insensitive' } },
+                    { title: { contains: 'Squat', mode: 'insensitive' } }
+                ]
+            },
             completedAt: { not: null },
             dailyLog: { userId: userId }
         }
     });
     if (gymCount >= 50) {
-        await tx.userTitle.upsert({
+        const t1 = await tx.userTitle.upsert({
             where: { userId_titleId: { userId, titleId: 'Iron Body' } },
             create: { userId, titleId: 'Iron Body' },
             update: {}
         });
+        if (t1) newUnlocks.push('Iron Body');
     }
+
+    // 2. SCHOLAR
+    const studyCount = await tx.taskCompletion.count({
+        where: {
+            task: {
+                OR: [
+                    { title: { contains: 'Read', mode: 'insensitive' } },
+                    { title: { contains: 'Study', mode: 'insensitive' } },
+                    { title: { contains: 'Deep Work', mode: 'insensitive' } }
+                ]
+            },
+            completedAt: { not: null },
+            dailyLog: { userId: userId }
+        }
+    });
+    if (studyCount >= 20) {
+        const t2 = await tx.userTitle.upsert({
+            where: { userId_titleId: { userId, titleId: 'Scholar' } },
+            create: { userId, titleId: 'Scholar' },
+            update: {}
+        });
+        if (t2) newUnlocks.push('Scholar');
+    }
+
+    // 3. EARLY BIRD ( completed time < 6 AM )
+    // Ensure we count things validly via Prisma raw since we need timezone extraction
+    const earlyCountResult = await tx.$queryRaw`
+        SELECT COUNT(*) as count FROM task_completions tc
+        JOIN daily_logs dl ON tc.daily_log_id = dl.id
+        WHERE dl.user_id = ${userId}
+        AND EXTRACT(HOUR FROM tc.completed_at AT TIME ZONE 'Asia/Kolkata') < 6
+    `;
+    const earlyCount = Number(earlyCountResult[0]?.count || 0);
+    if (earlyCount >= 7) {
+        const t3 = await tx.userTitle.upsert({
+            where: { userId_titleId: { userId, titleId: 'The Early Bird' } },
+            create: { userId, titleId: 'The Early Bird' },
+            update: {}
+        });
+        if (t3) newUnlocks.push('The Early Bird');
+    }
+
+    return newUnlocks;
 }
 
 export async function toggleTask(taskId, completed) {
@@ -374,11 +437,59 @@ export async function purchaseItem(cost, itemId) {
             const user = await tx.user.findUnique({ where: { id: session.userId } });
             if (user.gold < cost) throw new Error("Insufficient Gold");
             await tx.user.update({ where: { id: session.userId }, data: { gold: { decrement: cost } } });
+
+            if (itemId) {
+                await tx.userPurchase.upsert({
+                    where: { userId_itemId: { userId: session.userId, itemId } },
+                    create: { userId: session.userId, itemId },
+                    update: {}
+                });
+            }
         });
         revalidatePath('/');
         return { success: true };
     } catch (e) {
         return { success: false, message: e.message };
+    }
+}
+
+export async function getUnlockedItems() {
+    const session = await getSession();
+    if (!session) return [];
+
+    try {
+        const purchases = await prisma.userPurchase.findMany({
+            where: { userId: session.userId },
+            select: { itemId: true }
+        });
+        return purchases.map(p => p.itemId);
+    } catch (e) {
+        console.error(e);
+        return [];
+    }
+}
+
+export async function equipTheme(themeId) {
+    const session = await getSession();
+    if (!session) return { success: false };
+
+    try {
+        if (themeId) {
+            const check = await prisma.userPurchase.findUnique({
+                where: { userId_itemId: { userId: session.userId, itemId: themeId } }
+            });
+            if (!check) return { success: false, message: "Theme not owned" };
+        }
+
+        await prisma.user.update({
+            where: { id: session.userId },
+            data: { currentTheme: themeId || null }
+        });
+        revalidatePath('/');
+        return { success: true };
+    } catch (e) {
+        console.error(e);
+        return { success: false };
     }
 }
 

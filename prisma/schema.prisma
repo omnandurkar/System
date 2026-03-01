@@ -26,6 +26,7 @@ model User {
   bestStreak     Int      @default(0) @map("best_streak")
   lastActiveDate DateTime? @map("last_active_date") @db.Date
   currentTitle   String?   @map("current_title") @db.VarChar(100)
+  currentTheme   String?   @map("current_theme") @db.VarChar(100)
   createdAt      DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
 
   routines       Routine[]
@@ -34,6 +35,7 @@ model User {
   userTitles     UserTitle[]
   systemWhispers SystemWhisper[]
   gymLogs        GymLog[]
+  userPurchases  UserPurchase[]
 
   @@map("users")
 }
@@ -184,4 +186,15 @@ model GymDay {
   description String?
 
   @@map("gym_days")
+}
+
+model UserPurchase {
+  id      Int    @id @default(autoincrement())
+  userId  Int    @map("user_id")
+  itemId  String @map("item_id") @db.VarChar(100)
+  
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemId])
+  @@map("user_purchases")
 }

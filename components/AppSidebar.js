@@ -62,7 +62,7 @@ export function AppSidebar({ onNavigate, streak }) {
                                 )}
                             >
                                 <item.icon className="h-5 w-5 md:mr-3" />
-                                <span className="hidden md:block">{item.name}</span>
+                                <span className=" ms-2 md:block">{item.name}</span>
                             </Link>
                         );
                     })}

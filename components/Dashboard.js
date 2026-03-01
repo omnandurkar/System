@@ -55,8 +55,9 @@ export default async function Dashboard() {
             <SystemWhisper />
             <PenaltyOverlay user={user} routines={routines} />
             <PlayerStatus user={user} />
-            <BossRaidWidget bossRaid={user.bossRaid} totalTasks={totalTasks} completedTasks={completedTasks} />
+            <BossRaidWidget bossRaid={user.bossRaid} totalTasks={totalTasks} completedTasks={completedTasks} userLevel={user.level} />
             <DungeonBreakClientWrapper initialBreak={activeBreak} /> {/* We need a client wrapper for interactivity */}
+
             <GamificationWrapper totalTasks={totalTasks} completedTasks={completedTasks} />
 
             <div className="flex flex-col items-center justify-between gap-4 md:flex-row md:items-start">
@@ -80,7 +81,7 @@ export default async function Dashboard() {
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
-                    <ShopWrapper userGold={user.gold || 0} />
+                    <ShopWrapper userGold={user.gold || 0} currentTheme={user.current_theme} />
                     <CountdownTimer />
                 </div>
             </div>
