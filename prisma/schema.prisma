@@ -36,6 +36,7 @@ model User {
   systemWhispers SystemWhisper[]
   gymLogs        GymLog[]
   userPurchases  UserPurchase[]
+  recoveryLogs   RecoveryLog[]
 
   @@map("users")
 }
@@ -197,4 +198,23 @@ model UserPurchase {
 
   @@unique([userId, itemId])
   @@map("user_purchases")
+}
+
+model RecoveryLog {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @map("user_id")
+  logDate       DateTime @default(dbgenerated("CURRENT_DATE")) @map("log_date") @db.Date
+  sleepHours    Float?   @map("sleep_hours")
+  sorenessLevel Float?   @map("soreness_level")
+  stressLevel   Float?   @map("stress_level")
+  recoveryScore Int?     @map("recovery_score")
+  bedTime       DateTime? @map("bed_time") @db.Timestamp(6)
+  wakeTime      DateTime? @map("wake_time") @db.Timestamp(6)
+  hadDream      Boolean? @map("had_dream")
+  dreamLog      String?  @map("dream_log")
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, logDate])
+  @@map("recovery_logs")
 }
