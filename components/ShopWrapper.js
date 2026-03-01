@@ -5,7 +5,7 @@ import { ShoppingBag, Zap } from 'lucide-react';
 import { ShopModal } from '@/components/ShopModal';
 import { cn } from '@/lib/utils';
 
-export function ShopWrapper({ userGold }) {
+export function ShopWrapper({ userGold, currentTheme }) {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
@@ -25,6 +25,7 @@ export function ShopWrapper({ userGold }) {
                 isOpen={isOpen}
                 onClose={() => setIsOpen(false)}
                 userGold={userGold}
+                currentTheme={currentTheme}
             />
         </>
     );

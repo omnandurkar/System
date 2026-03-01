@@ -6,9 +6,12 @@ import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
 
-export function BossRaidWidget({ bossRaid, totalTasks, completedTasks }) {
+import { getRank } from '@/lib/rank';
+
+export function BossRaidWidget({ bossRaid, totalTasks, completedTasks, userLevel }) {
     if (!bossRaid || !bossRaid.isActive) return null;
 
+    const rankInfo = getRank(userLevel || 1);
     const { boss } = bossRaid;
     const progress = totalTasks > 0 ? (completedTasks / totalTasks) : 0;
     const healthPercentage = Math.max(0, 100 - (progress * 100));
@@ -47,19 +50,29 @@ export function BossRaidWidget({ bossRaid, totalTasks, completedTasks }) {
                     <motion.div
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm rounded-xl border border-yellow-500/50"
+                        className={cn(
+                            "absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm rounded-xl border",
+                            rankInfo.border,
+                            rankInfo.bg.replace('/10', '/20')
+                        )}
                     >
                         <motion.div
                             animate={{ rotate: [0, -5, 5, -5, 0] }}
                             transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
                         >
-                            <Trophy className="w-20 h-20 text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.6)]" />
+                            <Trophy className={cn("w-20 h-20 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]", rankInfo.color)} />
                         </motion.div>
-                        <h2 className="mt-4 text-4xl font-black text-transparent bg-clip-text bg-linear-to-b from-yellow-300 to-yellow-600 tracking-tighter uppercase drop-shadow-sm">
+                        <h2 className={cn(
+                            "mt-4 text-4xl font-black text-transparent bg-clip-text bg-linear-to-b tracking-tighter uppercase drop-shadow-sm",
+                            rankInfo.color === 'text-yellow-400' ? "from-yellow-300 to-yellow-600" :
+                                rankInfo.color === 'text-red-500' ? "from-red-400 to-red-700" :
+                                    rankInfo.color === 'text-purple-400' ? "from-purple-300 to-purple-600" :
+                                        "from-white to-zinc-400"
+                        )}>
                             DUNGEON CLEARED
                         </h2>
-                        <p className="text-yellow-200/80 font-mono text-sm tracking-widest mt-1">
-                            RANK S REWARD CLAIMED
+                        <p className={cn("font-mono text-sm tracking-widest mt-1 uppercase", rankInfo.color)}>
+                            RANK {rankInfo.rank} REWARD CLAIMED
                         </p>
                     </motion.div>
                 )}

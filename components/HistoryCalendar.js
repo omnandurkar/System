@@ -29,28 +29,31 @@ export function HistoryCalendar({ dailyLogs, tasks, gymLogs, recoveryLogs }) {
 
     // 1. EXP from Daily Logs
     dailyLogs.forEach(l => {
-        const d = new Date(l.date).toISOString().split('T')[0];
+        const d = format(new Date(l.date), 'yyyy-MM-dd');
         if (!dataMap[d]) dataMap[d] = { exp: 0, tasks: [], gym: [], recovery: null };
         dataMap[d].exp = l.total_exp_gained || 0;
     });
 
     // 2. Tasks
     tasks.forEach(t => {
-        const d = new Date(t.date).toISOString().split('T')[0];
-        if (!dataMap[d]) dataMap[d] = { exp: 0, tasks: [], gym: [], recovery: null };
-        dataMap[d].tasks.push(t);
+        // Warning: tasks prop usually is task_completions based on logic, checking 't.date' existence
+        if (t.date || t.completed_at) {
+            const d = format(new Date(t.date || t.completed_at), 'yyyy-MM-dd');
+            if (!dataMap[d]) dataMap[d] = { exp: 0, tasks: [], gym: [], recovery: null };
+            dataMap[d].tasks.push(t);
+        }
     });
 
     // 3. Gym
     gymLogs.forEach(g => {
-        const d = new Date(g.log_date).toISOString().split('T')[0];
+        const d = format(new Date(g.log_date), 'yyyy-MM-dd');
         if (!dataMap[d]) dataMap[d] = { exp: 0, tasks: [], gym: [], recovery: null };
         dataMap[d].gym.push(g);
     });
 
     // 4. Recovery
     recoveryLogs.forEach(r => {
-        const d = new Date(r.log_date).toISOString().split('T')[0];
+        const d = format(new Date(r.log_date), 'yyyy-MM-dd');
         if (!dataMap[d]) dataMap[d] = { exp: 0, tasks: [], gym: [], recovery: null };
         dataMap[d].recovery = r;
     });

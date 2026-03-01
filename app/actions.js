@@ -216,7 +216,13 @@ export async function getTodayTasks() {
         routinesRes.rows.forEach(row => {
 
             // WORK FILTER: If weekend, skip 'work'
-            if (isWeekend && row.category === 'work') return;
+            if (isWeekend) {
+                if (row.category === 'work') return;
+
+                // WEEKEND GYM/BOXING FILTER: Skip Gym and Boxing on weekends
+                const titleUpper = row.title.toUpperCase();
+                if (titleUpper.includes('GYM') || titleUpper.includes('BOXING')) return;
+            }
 
             if (!routines[row.routine_id]) {
                 routines[row.routine_id] = {
@@ -265,11 +271,13 @@ export async function getTodayTasks() {
 // --- Helper Functions for Task Completion Logic ---
 async function _awardTaskCompletion(client, userId, taskId, logId) {
     const taskRes = await client.query('SELECT exp_value FROM tasks WHERE id = $1', [taskId]);
-    const expGained = taskRes.rows[0].exp_value;
+    const expGained = taskRes.rows[0]?.exp_value || 0;
 
     const userRes = await client.query('SELECT level, exp, gold, fatigue, max_fatigue FROM users WHERE id = $1', [userId]);
-    const currentLevel = userRes.rows[0].level;
-    const currentExp = userRes.rows[0].exp;
+    if (userRes.rows.length === 0) return { success: false };
+
+    const currentLevel = userRes.rows[0].level || 1;
+    const currentExp = userRes.rows[0].exp || 0;
     const currentGold = userRes.rows[0].gold || 0;
 
     const newExp = currentExp + expGained;
@@ -323,10 +331,12 @@ async function _awardTaskCompletion(client, userId, taskId, logId) {
 
 async function _revertTaskCompletion(client, userId, taskId, logId) {
     const taskRes = await client.query('SELECT exp_value FROM tasks WHERE id = $1', [taskId]);
-    const expValue = taskRes.rows[0].exp_value;
+    const expValue = taskRes.rows[0]?.exp_value || 0;
 
     const userRes = await client.query('SELECT exp, gold, fatigue FROM users WHERE id = $1', [userId]);
-    const currentExp = userRes.rows[0].exp;
+    if (userRes.rows.length === 0) return { success: false };
+
+    const currentExp = userRes.rows[0].exp || 0;
     const currentGold = userRes.rows[0].gold || 0;
 
     const newExp = currentExp - expValue;
@@ -358,7 +368,7 @@ async function checkAchievements(client, userId) {
         WHERE t.title ILIKE '%Gym%' OR t.title ILIKE '%Workout%' OR t.title ILIKE '%Pushup%' OR t.title ILIKE '%Squat%'
         AND tc.completed_at IS NOT NULL AND tc.daily_log_id IN (SELECT id FROM daily_logs WHERE user_id = $1)
     `, [userId]);
-    const gymCount = parseInt(gymCountRes.rows[0].count);
+    const gymCount = parseInt(gymCountRes.rows[0]?.count || '0', 10);
 
     if (gymCount >= 50) {
         const res = await client.query("INSERT INTO user_titles (user_id, title_id) VALUES ($1, 'Iron Body') ON CONFLICT DO NOTHING RETURNING id", [userId]);
@@ -372,7 +382,7 @@ async function checkAchievements(client, userId) {
         WHERE t.title ILIKE '%Read%' OR t.title ILIKE '%Study%' OR t.title ILIKE '%Deep Work%'
         AND tc.completed_at IS NOT NULL AND tc.daily_log_id IN (SELECT id FROM daily_logs WHERE user_id = $1)
     `, [userId]);
-    const studyCount = parseInt(studyCountRes.rows[0].count);
+    const studyCount = parseInt(studyCountRes.rows[0]?.count || '0', 10);
 
     if (studyCount >= 20) {
         const res = await client.query("INSERT INTO user_titles (user_id, title_id) VALUES ($1, 'Scholar') ON CONFLICT DO NOTHING RETURNING id", [userId]);
@@ -392,7 +402,7 @@ async function checkAchievements(client, userId) {
         WHERE dl.user_id = $1
         AND EXTRACT(HOUR FROM tc.completed_at AT TIME ZONE 'Asia/Kolkata') < 6
     `, [userId]);
-    const earlyCount = parseInt(earlyCountRes.rows[0].count);
+    const earlyCount = parseInt(earlyCountRes.rows[0]?.count || '0', 10);
 
     if (earlyCount >= 7) {
         const res = await client.query("INSERT INTO user_titles (user_id, title_id) VALUES ($1, 'The Early Bird') ON CONFLICT DO NOTHING RETURNING id", [userId]);
@@ -620,6 +630,15 @@ export async function purchaseItem(cost, itemId) {
         const newGold = currentGold - cost;
         await client.query('UPDATE users SET gold = $1 WHERE id = $2', [newGold, session.userId]);
 
+        // Record Purchase
+        // If itemId starts with 'potion_', we might treat it as consumable inventory in future.
+        // For now, everything is a "purchase" record.
+        await client.query(`
+            INSERT INTO user_purchases (user_id, item_id) 
+            VALUES ($1, $2)
+            ON CONFLICT (user_id, item_id) DO NOTHING
+        `, [session.userId, itemId]);
+
         await client.query('COMMIT');
         revalidatePath('/');
         return { success: true, newGold };
@@ -627,6 +646,39 @@ export async function purchaseItem(cost, itemId) {
         await client.query('ROLLBACK');
         console.error(e);
         return { success: false, message: "Transaction Failed" };
+    } finally {
+        client.release();
+    }
+}
+
+export async function getUnlockedItems() {
+    const session = await getSession();
+    if (!session) return [];
+
+    const client = await pool.connect();
+    try {
+        const res = await client.query('SELECT item_id FROM user_purchases WHERE user_id = $1', [session.userId]);
+        return res.rows.map(r => r.item_id); // Return array of strings
+    } finally {
+        client.release();
+    }
+}
+
+export async function equipTheme(themeId) {
+    const session = await getSession();
+    if (!session) return { success: false };
+
+    const client = await pool.connect();
+    try {
+        // Validate ownership if not default
+        if (themeId) {
+            const check = await client.query('SELECT id FROM user_purchases WHERE user_id = $1 AND item_id = $2', [session.userId, themeId]);
+            if (check.rows.length === 0) return { success: false, message: "Theme not owned" };
+        }
+
+        await client.query('UPDATE users SET current_theme = $1 WHERE id = $2', [themeId, session.userId]);
+        revalidatePath('/');
+        return { success: true };
     } finally {
         client.release();
     }

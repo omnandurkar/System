@@ -23,9 +23,21 @@ export default function Layout({ children, user }) {
 
     const streak = user?.current_streak || 0;
     const bestStreak = user?.best_streak || 0;
+    const currentTheme = user?.current_theme;
 
     return (
-        <div className="flex h-screen overflow-hidden bg-background text-foreground">
+        <div className={cn(
+            "flex h-screen overflow-hidden bg-background text-foreground transition-colors duration-500",
+            currentTheme === 'theme_shadow_purple' && "bg-slate-950 selection:bg-purple-500/30",
+            currentTheme === 'theme_blood_red' && "bg-rose-950 selection:bg-red-500/30"
+        )}>
+            {/* Theme Overlay Gradients */}
+            {currentTheme === 'theme_shadow_purple' && (
+                <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900/20 via-slate-950/0 to-slate-950/0" />
+            )}
+            {currentTheme === 'theme_blood_red' && (
+                <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/20 via-rose-950/0 to-rose-950/0" />
+            )}
             <AuraEffects streak={streak} bestStreak={bestStreak} />
 
             {/* Desktop Sidebar - Strictly hidden on mobile, visible on desktop */}
