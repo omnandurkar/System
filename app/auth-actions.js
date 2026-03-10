@@ -1,6 +1,6 @@
 'use server';
 
-import pool from '@/lib/db';
+import prisma from '@/lib/db';
 import { login, logout } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 import { redirect } from 'next/navigation';
@@ -9,14 +9,15 @@ export async function loginUser(prevState, formData) {
     const username = formData.get('username');
     const password = formData.get('password');
 
-    const client = await pool.connect();
     try {
-        const res = await client.query('SELECT * FROM users WHERE username = $1', [username]);
-        if (res.rows.length === 0) {
+        const user = await prisma.user.findUnique({
+            where: { username: username }
+        });
+
+        if (!user) {
             return { error: 'Invalid credentials.' };
         }
 
-        const user = res.rows[0];
         const match = await bcrypt.compare(password, user.password);
 
         if (!match) {
@@ -25,13 +26,11 @@ export async function loginUser(prevState, formData) {
 
         // Success
         await login(user.id, user.username);
-
     } catch (error) {
         console.error(error);
         return { error: 'System error.' };
-    } finally {
-        client.release();
     }
+
     redirect('/');
 }
 
@@ -48,24 +47,37 @@ export async function signupUser(prevState, formData) {
         return { error: 'Password too weak.' };
     }
 
-    const client = await pool.connect();
     try {
         // Check existing
-        const check = await client.query('SELECT id FROM users WHERE username = $1', [username]);
-        if (check.rows.length > 0) {
+        const check = await prisma.user.findUnique({
+            where: { username: username },
+            select: { id: true }
+        });
+
+        if (check) {
             return { error: 'Username taken.' };
         }
 
         // Create User
         const hashed = await bcrypt.hash(password, 10);
-        const userRes = await client.query(
-            'INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id',
-            [username, hashed]
-        );
-        const userId = userRes.rows[0].id;
+
+        const newUser = await prisma.user.create({
+            data: {
+                username: username,
+                password: hashed,
+                level: 1,
+                exp: 0,
+                hp: 100,
+                maxHp: 100,
+                fatigue: 0,
+                maxFatigue: 100,
+                gold: 0
+            }
+        });
+
+        const userId = newUser.id;
 
         // --- CLONE DEFAULT ROUTINES FOR NEW USER ---
-        // (We hardcode the same defaults as setup-db.js for simplicity)
         const routines = [
             { name: 'Morning Discipline', start: '06:15', end: '08:00', cat: 'morning' },
             { name: 'Office Hours', start: '09:00', end: '18:00', cat: 'work' },
@@ -74,45 +86,57 @@ export async function signupUser(prevState, formData) {
         ];
 
         for (const r of routines) {
-            const rRes = await client.query(
-                'INSERT INTO routines (user_id, name, start_time, end_time, category) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-                [userId, r.name, r.start, r.end, r.cat]
-            );
-            const rId = rRes.rows[0].id;
+            const newRoutine = await prisma.routine.create({
+                data: {
+                    userId: userId,
+                    name: r.name,
+                    startTime: r.start,
+                    endTime: r.end,
+                    category: r.cat
+                }
+            });
+
+            const rId = newRoutine.id;
 
             let tasks = [];
             if (r.cat === 'morning') {
                 tasks = [
-                    { title: 'Wake up 06:15 - No Phone', exp: 20 },
-                    { title: 'Make Bed', exp: 10 },
-                    { title: 'Morning Food', exp: 10 },
-                    { title: 'Light Movement (Stretch/Core)', exp: 15 }
+                    { title: 'Wake up 06:15 - No Phone', expValue: 20 },
+                    { title: 'Make Bed', expValue: 10 },
+                    { title: 'Morning Food', expValue: 10 },
+                    { title: 'Light Movement (Stretch/Core)', expValue: 15 }
                 ];
             } else if (r.cat === 'work') {
                 tasks = [
-                    { title: 'Deep Work Session', exp: 50 },
-                    { title: 'No Slacking / No Complaints', exp: 20 }
+                    { title: 'Deep Work Session', expValue: 50 },
+                    { title: 'No Slacking / No Complaints', expValue: 20 }
                 ];
             } else if (r.cat === 'evening') {
                 tasks = [
-                    { title: 'Gym (Weights)', exp: 40 },
-                    { title: 'Boxing (Bag/Shadow)', exp: 30 },
-                    { title: 'Cool Down + Shower', exp: 10 }
+                    { title: 'Gym (Weights)', expValue: 40 },
+                    { title: 'Boxing (Bag/Shadow)', expValue: 30 },
+                    { title: 'Cool Down + Shower', expValue: 10 }
                 ];
             } else if (r.cat === 'night') {
                 tasks = [
-                    { title: 'Dinner (Clean)', exp: 10 },
-                    { title: 'Career Prep / Investing', exp: 30 },
-                    { title: 'Reading (Physical Book)', exp: 20 },
-                    { title: 'Sleep 22:45', exp: 20 }
+                    { title: 'Dinner (Clean)', expValue: 10 },
+                    { title: 'Career Prep / Investing', expValue: 30 },
+                    { title: 'Reading (Physical Book)', expValue: 20 },
+                    { title: 'Sleep 22:45', expValue: 20 }
                 ];
             }
 
             for (const t of tasks) {
-                await client.query(
-                    'INSERT INTO tasks (routine_id, title, exp_value) VALUES ($1, $2, $3)',
-                    [rId, t.title, t.exp]
-                );
+                await prisma.task.create({
+                    data: {
+                        routineId: rId,
+                        title: t.title,
+                        expValue: t.expValue,
+                        daysMask: '1111111',
+                        targetValue: 1,
+                        unit: 'reps'
+                    }
+                });
             }
         }
 
@@ -122,9 +146,8 @@ export async function signupUser(prevState, formData) {
     } catch (error) {
         console.error(error);
         return { error: 'System error.' };
-    } finally {
-        client.release();
     }
+
     redirect('/');
 }
 

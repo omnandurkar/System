@@ -4,14 +4,17 @@
 
 ▲ Next.js 16.1.4 (Turbopack)
 - Local:         http://localhost:3000
-- Network:       http://10.114.130.195:3000
+- Network:       http://10.167.180.195:3000
 - Environments: .env
 
 ✓ Starting...
 ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
-✓ Ready in 375ms
- GET /system-logs 200 in 3.6s (compile: 300ms, proxy.ts: 5ms, render: 3.3s)
- GET /apple-touch-icon-precomposed.png 404 in 75ms (compile: 48ms, render: 28ms)
- GET /apple-touch-icon.png 404 in 22ms (compile: 2ms, render: 20ms)
- GET /login 200 in 31ms (compile: 14ms, proxy.ts: 943µs, render: 16ms)
- GET /login 200 in 14ms (compile: 1303µs, proxy.ts: 878µs, render: 12ms)
+✓ Ready in 926ms
+ GET /login 200 in 1052ms (compile: 837ms, proxy.ts: 45ms, render: 170ms)
+ GET / 200 in 3.7s (compile: 304ms, proxy.ts: 8ms, render: 3.4s)
+ GET / 200 in 6.3s (compile: 7ms, proxy.ts: 6ms, render: 6.3s)
+ GET /apple-touch-icon-precomposed.png 404 in 116ms (compile: 56ms, render: 59ms)
+ GET /apple-touch-icon.png 404 in 33ms (compile: 3ms, render: 30ms)
+ GET /login 200 in 26ms (compile: 2ms, proxy.ts: 1481µs, render: 22ms)
+ GET /login 200 in 27ms (compile: 3ms, proxy.ts: 2ms, render: 23ms)
+ POST / 200 in 638ms (compile: 12ms, proxy.ts: 24ms, render: 602ms)
