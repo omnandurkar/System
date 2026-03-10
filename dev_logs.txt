@@ -88,3 +88,4 @@ Check the render method of `ExerciseManager`. See https://react.dev/link/warning
  GET /login 200 in 25ms (compile: 2ms, proxy.ts: 1631µs, render: 21ms)
 ✓ Compiled in 37ms
 ✓ Compiled in 33ms
+ GET /admin 200 in 3.3s (compile: 137ms, proxy.ts: 28ms, render: 3.1s)
