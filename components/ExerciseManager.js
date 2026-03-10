@@ -80,31 +80,29 @@ export function ExerciseManager({ initialExercises, initialDays }) {
 
             {/* DAY GRID */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-4">
-                {days.map((day) => {
+                {days.map((day, idx) => {
                     if (!day) return null;
                     const dayExercises = getExercisesForDay(day.day_number);
                     const count = dayExercises.length;
 
-                    // Fainted Neon Colors Map (0=Sun, 1=Mon, etc. or based on day_number if standard)
-                    // Ensuring we map day 0..6 to 7 colors
+                    // Fainted Neon Colors Map
                     const COLORS = [
-                        'border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-400', // 1 Mon ?? depends on ID, assuming 1=Mon
+                        'border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-400',
                         'border-orange-500/20 bg-orange-500/5 hover:bg-orange-500/10 text-orange-400',
                         'border-yellow-500/20 bg-yellow-500/5 hover:bg-yellow-500/10 text-yellow-400',
-                        'border-green-500/20 bg-green-500/5 hover:bg-green-500/10 text-green-400', // 4
-                        'border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 text-blue-400', // 5
-                        'border-indigo-500/20 bg-indigo-500/5 hover:bg-indigo-500/10 text-indigo-400', // 6
-                        'border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 hover:border-purple-500/30 text-purple-400', // 0 Sun / 7
+                        'border-green-500/20 bg-green-500/5 hover:bg-green-500/10 text-green-400',
+                        'border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 text-blue-400',
+                        'border-indigo-500/20 bg-indigo-500/5 hover:bg-indigo-500/10 text-indigo-400',
+                        'border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 hover:border-purple-500/30 text-purple-400',
                     ];
 
-                    // Safe color index calculation
                     const dayNum = Number(day.day_number);
                     const colorIndex = ((dayNum - 1) % 7 + 7) % 7;
                     const colorClass = COLORS[colorIndex] || COLORS[0];
 
                     return (
                         <motion.div
-                            key={day.day_number}
+                            key={`day-card-${day.day_number}-${idx}`}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => setSelectedDay(day.day_number)}
@@ -161,8 +159,8 @@ export function ExerciseManager({ initialExercises, initialDays }) {
                                 NO PROTOCOLS ASSIGNED
                             </div>
                         )}
-                        {selectedDay !== null && getExercisesForDay(selectedDay).map((ex) => (
-                            <div key={ex.id} className="group flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900 p-3 hover:bg-zinc-800/80">
+                        {selectedDay !== null && getExercisesForDay(selectedDay).map((ex, idx) => (
+                            <div key={`ex-row-${ex.id}-${idx}`} className="group flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900 p-3 hover:bg-zinc-800/80">
                                 <div>
                                     <h4 className="font-bold text-zinc-200 text-sm">{ex.exercise_name}</h4>
                                     <span className="text-xs font-mono text-zinc-500">{ex.sets_reps}</span>
