@@ -24,7 +24,7 @@ export function ExerciseManager({ initialExercises, initialDays }) {
     const [dayFormData, setDayFormData] = useState({ name: '', description: '' });
 
     // Helper: Get exercises for a specific day
-    const getExercisesForDay = (dayNum) => exercises.filter(e => e.day_number == dayNum);
+    const getExercisesForDay = (dayNum) => exercises.filter(e => e.dayNumber == dayNum);
 
     // --- Handlers ---
 
@@ -36,7 +36,7 @@ export function ExerciseManager({ initialExercises, initialDays }) {
 
     function openEdit(ex) {
         setEditingExercise(ex);
-        setFormData({ name: ex.exercise_name, sets_reps: ex.sets_reps, category: ex.category || 'WEIGHTS' });
+        setFormData({ name: ex.exerciseName, sets_reps: ex.setsReps, category: ex.category || 'WEIGHTS' });
         setIsAddModalOpen(true);
     }
 
@@ -58,7 +58,7 @@ export function ExerciseManager({ initialExercises, initialDays }) {
 
     async function handleDaySubmit() {
         if (editingDay) {
-            await updateDayInfo(editingDay.day_number, dayFormData.name, dayFormData.description);
+            await updateDayInfo(editingDay.dayNumber, dayFormData.name, dayFormData.description);
             setEditingDay(null);
             window.location.reload();
         }
@@ -82,7 +82,7 @@ export function ExerciseManager({ initialExercises, initialDays }) {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-4">
                 {days.map((day, idx) => {
                     if (!day) return null;
-                    const dayExercises = getExercisesForDay(day.day_number);
+                    const dayExercises = getExercisesForDay(day.dayNumber);
                     const count = dayExercises.length;
 
                     // Fainted Neon Colors Map
@@ -96,27 +96,27 @@ export function ExerciseManager({ initialExercises, initialDays }) {
                         'border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 hover:border-purple-500/30 text-purple-400',
                     ];
 
-                    const dayNum = Number(day.day_number);
+                    const dayNum = Number(day.dayNumber);
                     const colorIndex = ((dayNum - 1) % 7 + 7) % 7;
                     const colorClass = COLORS[colorIndex] || COLORS[0];
 
                     return (
                         <motion.div
-                            key={`day-card-${day.day_number}-${idx}`}
+                            key={`day-card-${day.dayNumber}-${idx}`}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            onClick={() => setSelectedDay(day.day_number)}
+                            onClick={() => setSelectedDay(day.dayNumber)}
                             className={cn(
                                 "group relative cursor-pointer rounded-lg border p-6 md:p-6 transition-all active:scale-95 touch-manipulation",
                                 colorClass,
                                 // Selected state override
-                                selectedDay === day.day_number ? "ring-1 ring-white bg-opacity-20" : ""
+                                selectedDay === day.dayNumber ? "ring-1 ring-white bg-opacity-20" : ""
                             )}
                         >
 
 
                             <div className="flex items-center justify-between mb-2">
-                                <span className={cn("text-xs font-mono font-bold opacity-70", "text-inherit")}>DAY {day.day_number === 0 ? 7 : day.day_number}</span>
+                                <span className={cn("text-xs font-mono font-bold opacity-70", "text-inherit")}>DAY {day.dayNumber === 0 ? 7 : day.dayNumber}</span>
                                 <Calendar className="h-4 w-4 opacity-50" />
                             </div>
                             <h3 className={cn("font-bold text-lg tracking-tight", "text-zinc-100")}>{day.name}</h3>
@@ -144,7 +144,7 @@ export function ExerciseManager({ initialExercises, initialDays }) {
             <Modal
                 isOpen={selectedDay !== null}
                 onClose={() => setSelectedDay(null)}
-                title={`${days.find(d => d.day_number === selectedDay)?.name} // PROTOCOLS`}
+                title={`${days.find(d => d.dayNumber === selectedDay)?.name} // PROTOCOLS`}
             >
                 <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                     <div className="flex justify-end">
@@ -162,8 +162,8 @@ export function ExerciseManager({ initialExercises, initialDays }) {
                         {selectedDay !== null && getExercisesForDay(selectedDay).map((ex, idx) => (
                             <div key={`ex-row-${ex.id}-${idx}`} className="group flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900 p-3 hover:bg-zinc-800/80">
                                 <div>
-                                    <h4 className="font-bold text-zinc-200 text-sm">{ex.exercise_name}</h4>
-                                    <span className="text-xs font-mono text-zinc-500">{ex.sets_reps}</span>
+                                    <h4 className="font-bold text-zinc-200 text-sm">{ex.exerciseName}</h4>
+                                    <span className="text-xs font-mono text-zinc-500">{ex.setsReps}</span>
                                 </div>
                                 <div className="flex gap-1">
                                     <Button variant="ghost" size="sm" onClick={() => openEdit(ex)}><Edit2 className="h-3 w-3" /></Button>
