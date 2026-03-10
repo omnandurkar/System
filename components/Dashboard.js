@@ -64,9 +64,9 @@ export default async function Dashboard() {
                 <div className="space-y-2 text-center md:text-left">
                     <div className="flex flex-col md:flex-row md:items-center gap-4">
                         <div className="flex flex-col">
-                            {user.current_title && (
+                            {user.currentTitle && (
                                 <span className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-1 self-start">
-                                    {user.current_title}
+                                    {user.currentTitle}
                                 </span>
                             )}
                             <h1 className="text-3xl font-bold tracking-tighter uppercase sm:text-5xl">
@@ -77,11 +77,11 @@ export default async function Dashboard() {
                     </div>
                     <div className="flex items-center gap-4">
                         <p className="font-mono text-sm tracking-widest text-muted-foreground">STATUS: HEALTHY</p>
-                        <TitleSelector userTitles={userTitles} currentTitle={user.current_title} />
+                        <TitleSelector userTitles={userTitles} currentTitle={user.currentTitle} />
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
-                    <ShopWrapper userGold={user.gold || 0} currentTheme={user.current_theme} />
+                    <ShopWrapper userGold={user.gold || 0} currentTheme={user.currentTheme} />
                     <CountdownTimer />
                 </div>
             </div>

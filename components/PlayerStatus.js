@@ -11,14 +11,14 @@ export function PlayerStatus({ user }) {
     const [fatigue, setFatigue] = useState(user.fatigue || 0);
     const [isPending, startTransition] = useTransition();
 
-    const hpPercentage = Math.min(100, Math.max(0, (user.hp / (user.max_hp || 100)) * 100));
-    const fatiguePercentage = Math.min(100, Math.max(0, (fatigue / (user.max_fatigue || 100)) * 100));
+    const hpPercentage = Math.min(100, Math.max(0, (user.hp / (user.maxHp || 100)) * 100));
+    const fatiguePercentage = Math.min(100, Math.max(0, (fatigue / (user.maxFatigue || 100)) * 100));
 
     // Stats
     const str = user.strength || 1;
     const int = user.intelligence || 1;
     const vit = user.vitality || 1;
-    const points = user.stat_points || 0;
+    const points = user.statPoints || 0;
 
     const handleTakeBreak = () => {
         // Optimistic Update
@@ -48,7 +48,7 @@ export function PlayerStatus({ user }) {
                     <div className="flex-1">
                         <div className="flex justify-between text-xs font-bold uppercase mb-1">
                             <span className="text-zinc-400">Health</span>
-                            <span className="text-red-500">{user.hp} / {user.max_hp || 100}</span>
+                            <span className="text-red-500">{user.hp} / {user.maxHp || 100}</span>
                         </div>
                         <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
                             <motion.div

@@ -34,7 +34,7 @@ export function AnimatedStats({ user, nextLevelExp, progress }) {
                 className="rounded-xl border border-border bg-card p-6"
             >
                 <h3 className="text-sm font-medium text-muted-foreground">CURRENT STREAK</h3>
-                <div className="mt-2 text-4xl font-bold">{user.current_streak} <span className="text-lg font-normal text-muted-foreground">DAYS</span></div>
+                <div className="mt-2 text-4xl font-bold">{user.currentStreak} <span className="text-lg font-normal text-muted-foreground">DAYS</span></div>
             </motion.div>
 
             <motion.div

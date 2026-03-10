@@ -21,9 +21,9 @@ export default function Layout({ children, user }) {
         return <>{children}</>;
     }
 
-    const streak = user?.current_streak || 0;
-    const bestStreak = user?.best_streak || 0;
-    const currentTheme = user?.current_theme;
+    const streak = user?.currentStreak || 0;
+    const bestStreak = user?.bestStreak || 0;
+    const currentTheme = user?.currentTheme;
 
     return (
         <div className={cn(
