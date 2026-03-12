@@ -37,6 +37,7 @@ model User {
   gymLogs        GymLog[]
   userPurchases  UserPurchase[]
   recoveryLogs   RecoveryLog[]
+  monthlyBudgets MonthlyBudget[]
 
   @@map("users")
 }
@@ -48,6 +49,7 @@ model Routine {
   startTime String? @map("start_time") @db.VarChar(10)
   endTime   String? @map("end_time") @db.VarChar(10)
   category  String? @db.VarChar(20)
+  orderIndex Int?   @default(0) @map("order_index")
 
   user  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
   tasks Task[]
@@ -64,6 +66,7 @@ model Task {
   targetValue Int?    @default(1) @map("target_value")
   unit        String? @db.VarChar(20)
   daysMask    String? @default("1111111") @map("days_mask") @db.VarChar(7)
+  orderIndex  Int?    @default(0) @map("order_index")
   isHardcoded Boolean? @default(false) @map("is_hardcoded")
 
   routine         Routine?         @relation(fields: [routineId], references: [id], onDelete: Cascade)
@@ -217,4 +220,47 @@ model RecoveryLog {
 
   @@unique([userId, logDate])
   @@map("recovery_logs")
+}
+
+model MonthlyBudget {
+  id          Int    @id @default(autoincrement())
+  userId      Int    @map("user_id")
+  month       Int
+  year        Int
+  income      Float  @default(0)
+  savingsGoal Float  @default(0) @map("savings_goal")
+  xpAwarded   Boolean @default(false) @map("xp_awarded")
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fixedExpenses    FixedExpense[]
+  variableExpenses VariableExpense[]
+
+  @@unique([userId, month, year])
+  @@map("monthly_budgets")
+}
+
+model FixedExpense {
+  id       Int    @id @default(autoincrement())
+  budgetId Int    @map("budget_id")
+  name     String @db.VarChar(100)
+  amount   Float
+  category String @default("OTHER") @db.VarChar(30)
+  isPaid   Boolean @default(false) @map("is_paid")
+
+  budget MonthlyBudget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  @@map("fixed_expenses")
+}
+
+model VariableExpense {
+  id       Int      @id @default(autoincrement())
+  budgetId Int      @map("budget_id")
+  name     String   @db.VarChar(100)
+  amount   Float
+  category String   @default("OTHER") @db.VarChar(30)
+  date     DateTime @default(now()) @db.Date
+
+  budget MonthlyBudget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  @@map("variable_expenses")
 }

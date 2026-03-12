@@ -1,6 +1,6 @@
-import { getAllRoutinesAndTasks, updateTask } from './actions';
+import { getAllRoutinesAndTasks } from './actions';
 import { getAllExercises, getAllDays } from '@/app/gym-action';
-import { AdminTaskRow } from './admin-client';
+import { AdminRoutineList } from './admin-routine-list';
 import { ExerciseManager } from '@/components/ExerciseManager';
 
 export default async function AdminPage() {
@@ -19,19 +19,7 @@ export default async function AdminPage() {
                 <ExerciseManager initialExercises={exercises} initialDays={days} />
             </div>
 
-            <div className="space-y-8">
-                {routines.map((routine) => (
-                    <div key={routine.id} className="rounded-xl border border-border bg-card p-6">
-                        <h2 className="mb-4 text-xl font-bold">{routine.name} <span className="text-sm font-normal text-muted-foreground">({routine.time})</span></h2>
-
-                        <div className="space-y-4">
-                            {routine.tasks.map((task) => (
-                                <AdminTaskRow key={task.id} task={task} />
-                            ))}
-                        </div>
-                    </div>
-                ))}
-            </div>
+            <AdminRoutineList initialRoutines={routines} />
         </div>
     );
 }

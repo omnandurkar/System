@@ -125,58 +125,63 @@ export async function getTodayTasks() {
         const dayOfWeek = todayNow.getDay();
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-        if (isWeekend) {
-            const wkCheck = await prisma.routine.findFirst({ where: { userId: session.userId, category: 'weekend_chores' } });
-            if (!wkCheck) {
-                const r = await prisma.routine.create({
-                    data: { userId: session.userId, name: 'WEEKEND OPS', startTime: '09:00', endTime: '12:00', category: 'weekend_chores' }
-                });
-                await prisma.task.createMany({
-                    data: [
-                        { routineId: r.id, title: 'Room Cleaning & Laundry', expValue: 50 },
-                        { routineId: r.id, title: 'Grocery / Meal Prep', expValue: 30 },
-                        { routineId: r.id, title: 'Social / Outing', expValue: 40 }
-                    ]
-                });
-            }
-            const brCheck = await prisma.routine.findFirst({ where: { userId: session.userId, category: 'boss_raid' } });
-            if (!brCheck) {
-                const r = await prisma.routine.create({
-                    data: { userId: session.userId, name: '☠️ BOSS RAID CHALLENGE', startTime: 'ALL DAY', endTime: '23:59', category: 'boss_raid' }
-                });
-                await prisma.task.createMany({
-                    data: [
-                        { routineId: r.id, title: '100 Pushups', expValue: 150, targetValue: 100, unit: 'reps' },
-                        { routineId: r.id, title: '5km Run / Walk', expValue: 200, targetValue: 5, unit: 'km' },
-                        { routineId: r.id, title: '100 Squats', expValue: 150, targetValue: 100, unit: 'reps' },
-                        { routineId: r.id, title: '200 Sit-ups', expValue: 180, targetValue: 200, unit: 'reps' }
-                    ]
-                });
-            }
-        }
+        // Note: Earlier hardcoded weekend chore injection removed 
+        // because the Man Protocol setups handle this globally via daysMask now.
 
         const routinesData = await prisma.routine.findMany({
             where: { userId: session.userId },
             include: {
                 tasks: {
                     include: { taskCompletions: { where: { dailyLogId: logId } } },
-                    orderBy: { id: 'asc' }
+                    orderBy: [
+                        { orderIndex: 'asc' },
+                        { id: 'asc' }
+                    ]
                 }
-            }
+            },
+            orderBy: [
+                { orderIndex: 'asc' },
+                { id: 'asc' }
+            ]
         });
 
-        const routineOrder = { 'penalty': 0, 'morning': 1, 'work': 2, 'weekend_chores': 2, 'evening': 3, 'night': 4, 'boss_raid': 10 };
-        const sortedRoutines = routinesData.filter(r => isWeekend && r.category === 'work' ? false : true)
-            .sort((a, b) => (routineOrder[a.category] || 5) - (routineOrder[b.category] || 5));
+        // The hardcoded routineOrder is no longer necessary as we have orderIndex now.
+        // But for existing users/routines without explicit order, it might still be useful.
+        // We'll trust the DB order as it's sorted by orderIndex above.
+        const sortedRoutines = routinesData;
+
+        // Let's rely on daysMask for precise day filtering (Mon=0, Tue=1, ..., Sun=6)
+        // JS getDay() is Sun=0, Mon=1. We need to map JS Day -> Mask Index.
+        // Javascript: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+        // Mask Index: 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
+        const maskIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+        // Fetch how many gym exercises exist for today so we can conditionally hide empty tasks
+        let dayNum = 0;
+        if (dayOfWeek >= 1 && dayOfWeek <= 5) dayNum = dayOfWeek;
+
+        const weightsCount = await prisma.gymExercise.count({
+            where: { dayNumber: dayNum, OR: [{ category: 'WEIGHTS' }, { category: null }] }
+        });
+        const boxingCount = await prisma.gymExercise.count({
+            where: { dayNumber: dayNum, category: 'BOXING' }
+        });
 
         return sortedRoutines.map(r => {
-            let filteredTasks = r.tasks;
-            if (isWeekend) {
-                filteredTasks = filteredTasks.filter(t => {
-                    const titleUpper = t.title.toUpperCase();
-                    return !(titleUpper.includes('GYM') || titleUpper.includes('BOXING'));
-                });
-            }
+            const filteredTasks = r.tasks.filter(t => {
+                // If a mask exists, explicitly check the current day against it
+                if (t.daysMask && t.daysMask.length === 7) {
+                    if (t.daysMask[maskIndex] !== '1') return false;
+                }
+
+                // Hide Gym / Boxing tasks if there are no exercises configured for today
+                const titleLower = t.title.toLowerCase();
+                if (titleLower.includes('boxing') && boxingCount === 0) return false;
+                if ((titleLower.includes('gym') || titleLower.includes('weights')) && weightsCount === 0) return false;
+
+                return true; // If no mask provided, show it
+            });
+
             return {
                 id: r.id, name: r.name, time: `${r.startTime} - ${r.endTime}`, category: r.category,
                 tasks: filteredTasks.map(t => {
@@ -189,7 +194,7 @@ export async function getTodayTasks() {
                     };
                 })
             };
-        });
+        }).filter(r => r.tasks.length > 0); // Hide empty routines entirely
     } catch (e) {
         console.error(e);
         return [];

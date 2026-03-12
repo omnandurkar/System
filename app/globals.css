@@ -55,6 +55,10 @@
     font-family: var(--font-mono);
     -webkit-font-smoothing: antialiased;
   }
+
+  button {
+    cursor: pointer;
+  }
 }
 
 @layer components {

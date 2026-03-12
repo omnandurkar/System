@@ -122,7 +122,7 @@ export function TaskItem({ task }) {
                         {/* Status Badges */}
                         {task.isGym && !completed && (
                             <span className="text-[10px] font-bold uppercase tracking-widest text-primary animate-pulse">
-                                Locked • Complete in Gym
+                                Locked • Complete in Gym & Box
                             </span>
                         )}
                         {!completed && !task.isGym && !isProgressTask && (

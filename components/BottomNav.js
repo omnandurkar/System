@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, CheckSquare, Dumbbell, Utensils, Moon, Shield } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Dumbbell, Utensils, Moon, Shield, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -11,6 +11,7 @@ const navItems = [
     { name: 'Gym', href: '/gym', icon: Dumbbell },
     { name: 'Fuel', href: '/fuel', icon: Utensils },
     { name: 'Sleep', href: '/recovery', icon: Moon },
+    { name: 'Treasury', href: '/finance', icon: Wallet },
     { name: 'Admin', href: '/admin', icon: Shield },
 ];
 
