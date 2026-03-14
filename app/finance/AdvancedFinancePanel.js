@@ -49,17 +49,18 @@ export default function AdvancedFinancePanel({ onClose, monthlySavings, monthlyE
 
                     <div className="flex items-center gap-1 bg-black/40 p-1 rounded-lg border border-zinc-800">
                         <button
-                            onClick={() => setActiveTab('ADVISOR')}
-                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-mono transition-all ${activeTab === 'ADVISOR' ? 'bg-zinc-800 text-yellow-400' : 'text-zinc-500 hover:text-zinc-300'}`}
-                        >
-                            <Brain size={14} /> PURCHASE_ADVISOR
-                        </button>
-                        <button
                             onClick={() => setActiveTab('NETWORTH')}
                             className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-mono transition-all ${activeTab === 'NETWORTH' ? 'bg-zinc-800 text-blue-400' : 'text-zinc-500 hover:text-zinc-300'}`}
                         >
                             <Landmark size={14} /> NET_WORTH_HUB
                         </button>
+                        <button
+                            onClick={() => setActiveTab('ADVISOR')}
+                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-mono transition-all ${activeTab === 'ADVISOR' ? 'bg-zinc-800 text-yellow-400' : 'text-zinc-500 hover:text-zinc-300'}`}
+                        >
+                            <Brain size={14} /> PURCHASE_ADVISOR
+                        </button>
+
                     </div>
 
                     <button
@@ -80,6 +81,7 @@ export default function AdvancedFinancePanel({ onClose, monthlySavings, monthlyE
                     ) : (
                         <div className="max-w-4xl mx-auto animate-in slide-in-from-bottom-4 duration-700">
                             {activeTab === 'ADVISOR' ? (
+
                                 <PurchaseAdvisor monthlySavings={monthlySavings} />
                             ) : (
                                 <NetWorthHub

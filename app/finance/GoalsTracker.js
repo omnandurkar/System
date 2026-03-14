@@ -52,6 +52,8 @@ export default function GoalsTracker({ goals, setGoals, monthlySavings, totalLiq
     // Feature #13 — accelerate slider state
     const [accelerateGoalId, setAccelerateGoalId] = useState(null);
     const [extraSavings, setExtraSavings] = useState(5000);
+    const [confirmDelete, setConfirmDelete] = useState({ show: false, id: null, title: '' });
+
 
     const activeGoals = goals.filter(g => !g.completedAt);
     const completedGoals = goals.filter(g => g.completedAt);
@@ -65,9 +67,16 @@ export default function GoalsTracker({ goals, setGoals, monthlySavings, totalLiq
     }
 
     async function handleDelete(id) {
+        const goal = goals.find(g => g.id === id);
+        setConfirmDelete({ show: true, id, title: goal?.title || 'this goal' });
+    }
+
+    async function executeDelete(id) {
         await deleteFinanceGoal(id);
         setGoals(prev => prev.filter(g => g.id !== id));
+        setConfirmDelete({ show: false, id: null, title: '' });
     }
+
 
     async function handleComplete(id) {
         await completeGoal(id);
@@ -233,6 +242,36 @@ export default function GoalsTracker({ goals, setGoals, monthlySavings, totalLiq
                     </div>
                 </div>
             )}
+            {/* Deletion Confirmation Modal */}
+            {confirmDelete.show && (
+                <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-sm rounded-xl border border-red-500/30 bg-zinc-950 p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center gap-3 mb-4 text-red-500">
+                            <AlertTriangle size={24} />
+                            <h3 className="font-mono text-sm font-bold uppercase tracking-widest">MISSION_TERMINATION</h3>
+                        </div>
+                        <p className="text-xs font-mono text-zinc-400 mb-6 leading-relaxed">
+                            Are you sure you want to terminate goal <span className="text-white font-bold">"{confirmDelete.title}"</span>?
+                            This progress will be lost to the System.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setConfirmDelete({ show: false, id: null, title: '' })}
+                                className="flex-1 py-1.5 rounded border border-zinc-800 text-zinc-400 hover:bg-zinc-900 font-mono text-[9px] uppercase tracking-widest transition-all"
+                            >
+                                ABORT
+                            </button>
+                            <button
+                                onClick={() => executeDelete(confirmDelete.id)}
+                                className="flex-1 py-1.5 rounded bg-red-600 hover:bg-red-500 text-white font-mono font-bold text-[9px] uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+                            >
+                                CONFIRM_DELETE
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
+

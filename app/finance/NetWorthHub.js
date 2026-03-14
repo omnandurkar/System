@@ -79,6 +79,8 @@ export default function NetWorthHub({ assets, setAssets, monthlySavings, monthly
     const [editAmount, setEditAmount] = useState('');
     const [history, setHistory] = useState([]);
     const [viewMode, setViewMode] = useState('GRID'); // GRID or LIST
+    const [confirmDelete, setConfirmDelete] = useState({ show: false, id: null, name: '' });
+
 
     const totalNetWorth = assets.reduce((s, a) => s + a.amount, 0);
     const totalLiquid = assets.filter(a => a.isLiquid).reduce((s, a) => s + a.amount, 0);
@@ -128,11 +130,18 @@ export default function NetWorthHub({ assets, setAssets, monthlySavings, monthly
     }
 
     async function handleDelete(id) {
+        const asset = assets.find(a => a.id === id);
+        setConfirmDelete({ show: true, id, name: asset?.name || 'this asset' });
+    }
+
+    async function executeDelete(id) {
         await deleteNetWorthAsset(id);
         const updated = await getNetWorthAssets();
         setAssets(updated);
         getNetWorthHistory().then(setHistory);
+        setConfirmDelete({ show: false, id: null, name: '' });
     }
+
 
     const inp = "rounded border border-zinc-700 bg-zinc-800/80 px-3 py-1.5 text-sm text-white font-mono placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 w-full";
     const sel = "rounded border border-zinc-700 bg-zinc-800/80 px-2 py-1.5 text-xs text-white font-mono focus:outline-none";
@@ -359,6 +368,36 @@ export default function NetWorthHub({ assets, setAssets, monthlySavings, monthly
                     </div>
                 )}
             </div>
+            {/* Deletion Confirmation Modal */}
+            {confirmDelete.show && (
+                <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-sm rounded-xl border border-red-500/30 bg-zinc-950 p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center gap-3 mb-4 text-red-500">
+                            <AlertTriangle size={24} />
+                            <h3 className="font-mono text-sm font-bold uppercase tracking-widest">ASSET_DESTRUCTION</h3>
+                        </div>
+                        <p className="text-xs font-mono text-zinc-400 mb-6 leading-relaxed">
+                            Are you sure you want to delete <span className="text-white font-bold">"{confirmDelete.name}"</span>?
+                            This action is permanent and cannot be reversed.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setConfirmDelete({ show: false, id: null, name: '' })}
+                                className="flex-1 py-1.5 rounded border border-zinc-800 text-zinc-400 hover:bg-zinc-900 font-mono text-[9px] uppercase tracking-widest transition-all"
+                            >
+                                ABORT
+                            </button>
+                            <button
+                                onClick={() => executeDelete(confirmDelete.id)}
+                                className="flex-1 py-1.5 rounded bg-red-600 hover:bg-red-500 text-white font-mono font-bold text-[9px] uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+                            >
+                                CONFIRM_DELETE
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
+

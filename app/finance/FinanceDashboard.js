@@ -142,6 +142,8 @@ export default function FinanceDashboard({ initialBudget, currentMonth, currentY
     const [showSettlement, setShowSettlement] = useState(false);
     const [settleToAssetId, setSettleToAssetId] = useState('');
     const [assets, setAssets] = useState([]);
+    const [confirmDelete, setConfirmDelete] = useState({ show: false, id: null, type: null, name: '' });
+
 
     useEffect(() => {
         if (showSettlement) {
@@ -226,9 +228,15 @@ export default function FinanceDashboard({ initialBudget, currentMonth, currentY
     }
 
     async function handleDeleteFixed(id) {
+        setConfirmDelete({ show: true, id, type: 'FIXED', name: budget.fixedExpenses.find(e => e.id === id)?.name || '' });
+    }
+
+    async function executeDeleteFixed(id) {
         await deleteFixedExpense(id);
         setBudget(b => ({ ...b, fixedExpenses: b.fixedExpenses.filter(e => e.id !== id) }));
+        setConfirmDelete({ show: false, id: null, type: null, name: '' });
     }
+
 
     async function handleAddVariable() {
         if (!varName || !varAmount || !budget) return;
@@ -240,9 +248,15 @@ export default function FinanceDashboard({ initialBudget, currentMonth, currentY
     }
 
     async function handleDeleteVariable(id) {
+        setConfirmDelete({ show: true, id, type: 'VARIABLE', name: budget.variableExpenses.find(e => e.id === id)?.name || '' });
+    }
+
+    async function executeDeleteVariable(id) {
         await deleteVariableExpense(id);
         setBudget(b => ({ ...b, variableExpenses: b.variableExpenses.filter(e => e.id !== id) }));
+        setConfirmDelete({ show: false, id: null, type: null, name: '' });
     }
+
 
     // Feature #4 — Quick Log submit
     async function handleQuickLog() {
@@ -306,7 +320,38 @@ export default function FinanceDashboard({ initialBudget, currentMonth, currentY
                 </div>
             )}
 
+            {/* Deletion Confirmation Modal */}
+            {confirmDelete.show && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-sm rounded-xl border border-red-500/30 bg-zinc-950 p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center gap-3 mb-4 text-red-500">
+                            <AlertTriangle size={24} />
+                            <h3 className="font-mono text-sm font-bold uppercase tracking-widest">DELETION_PROTOCOL</h3>
+                        </div>
+                        <p className="text-xs font-mono text-zinc-400 mb-6 leading-relaxed">
+                            Are you sure you want to delete <span className="text-white font-bold">"{confirmDelete.name}"</span>?
+                            This action cannot be reverted by the System.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setConfirmDelete({ show: false, id: null, type: null, name: '' })}
+                                className="flex-1 py-1.5 rounded border border-zinc-800 text-zinc-400 hover:bg-zinc-900 font-mono text-[9px] uppercase tracking-widest transition-all"
+                            >
+                                ABORT
+                            </button>
+                            <button
+                                onClick={() => confirmDelete.type === 'FIXED' ? executeDeleteFixed(confirmDelete.id) : executeDeleteVariable(confirmDelete.id)}
+                                className="flex-1 py-1.5 rounded bg-red-600 hover:bg-red-500 text-white font-mono font-bold text-[9px] uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+                            >
+                                CONFIRM_DELETE
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Advanced Panel */}
+
             {showAdvanced && <AdvancedFinancePanel
                 onClose={() => setShowAdvanced(false)}
                 monthlySavings={actualSavings}
