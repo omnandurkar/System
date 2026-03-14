@@ -6,6 +6,8 @@ import { LayoutDashboard, CheckSquare, Dumbbell, Utensils, Moon, Shield, LogOut,
 import { cn } from '@/lib/utils';
 import { logoutUser } from '@/app/auth-actions';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { SystemLogo, SystemTitle } from '@/components/SystemLogo';
+
 
 const navItems = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -25,7 +27,7 @@ export function AppSidebar({ onNavigate, streak }) {
 
     return (
         <div className={cn(
-            "relative flex h-full w-full flex-col items-center border-r border-border bg-card py-8 md:w-64 overflow-hidden text-clip",
+            "relative flex h-full w-full flex-col items-center border-r border-border bg-card pt-12 pb-8 md:w-72 overflow-hidden text-clip",
             hasDarkEnergy && "border-purple-900/30"
         )}>
             {hasDarkEnergy && (
@@ -40,15 +42,15 @@ export function AppSidebar({ onNavigate, streak }) {
                 </>
             )}
 
-            <div className="relative z-10 w-full flex flex-col h-full items-center">
-                <div className="mb-8 flex items-center justify-center">
-                    <div className="h-8 w-8 rounded-full bg-foreground" />
-                    <span className="ml-3 hidden text-lg font-bold tracking-tight md:block">
-                        SYSTEM
-                    </span>
+            <div className="relative z-10 space-y-4 w-full flex flex-col h-full items-start px-8">
+                <div className=" flex items-center pt-2  space-x-2 justify-start gap-5 w-full">
+                    <SystemLogo size={42} glow={true} className="shrink-0 pr-2 drop-shadow-[0_0_20px_rgba(59,130,246,0.2)]" />
+                    <div className="hidden md:block overflow-hidden">
+                        <SystemTitle />
+                    </div>
                 </div>
 
-                <nav className="flex flex-1 flex-col gap-2 px-2 w-full">
+                <nav className="flex flex-1 flex-col gap-2 w-full">
                     {navItems.map((item) => {
                         const isActive = pathname === item.href;
                         return (
@@ -57,36 +59,38 @@ export function AppSidebar({ onNavigate, streak }) {
                                 href={item.href}
                                 onClick={onNavigate}
                                 className={cn(
-                                    "group flex h-10 w-full items-center justify-start rounded-md px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-                                    isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground",
+                                    "group flex h-10 w-full items-center justify-start rounded-xl px-4 text-xs font-mono uppercase tracking-widest transition-all",
+                                    isActive
+                                        ? "bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]"
+                                        : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5 border border-transparent",
                                     "md:w-full"
                                 )}
                             >
-                                <item.icon className="h-5 w-5 md:mr-3" />
-                                <span className=" ms-2 md:block">{item.name}</span>
+                                <item.icon className={cn("h-4 w-4 md:mr-3 transition-transform group-hover:scale-110", isActive && "text-blue-400")} />
+                                <span className="hidden md:block">{item.name}</span>
                             </Link>
                         );
                     })}
                 </nav>
 
-                <div className="mt-auto w-full px-2 space-y-2">
+                <div className="mt-auto w-full space-y-2 pt-4 border-t border-zinc-800/50">
                     <form action={logoutUser}>
                         <button
                             type="submit"
                             className={cn(
-                                "group flex h-10 w-full items-center justify-start rounded-md px-3 text-sm font-medium text-red-500 transition-colors hover:bg-red-500/10",
+                                "group flex h-10 w-full items-center justify-start rounded-xl px-4 text-xs font-mono uppercase tracking-widest text-red-500/60 transition-all hover:bg-red-500/10 hover:text-red-500",
                                 "md:w-full"
                             )}
                         >
-                            <LogOut className="h-5 w-5 md:mr-3" />
-                            <span className="hidden md:block">Logout</span>
+                            <LogOut className="h-4 w-4 md:mr-3" />
+                            <span className="hidden md:block">Terminate Session</span>
                         </button>
                     </form>
                 </div>
 
-                <div className="mt-4 px-4 text-center">
-                    <p className="hidden text-xs text-muted-foreground md:block">
-                        v1.0.0 SYSTEM
+                <div className=" w-full opacity-30">
+                    <p className="hidden text-[8px] font-mono text-zinc-500 md:block uppercase tracking-[0.2em]">
+                        v1.6.0-PROXIMA // SYSTEM
                     </p>
                 </div>
             </div>

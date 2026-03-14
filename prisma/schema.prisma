@@ -29,15 +29,19 @@ model User {
   currentTheme   String?   @map("current_theme") @db.VarChar(100)
   createdAt      DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
 
-  routines       Routine[]
-  dailyLogs      DailyLog[]
-  dungeonBreaks  DungeonBreak[]
-  userTitles     UserTitle[]
-  systemWhispers SystemWhisper[]
-  gymLogs        GymLog[]
-  userPurchases  UserPurchase[]
-  recoveryLogs   RecoveryLog[]
-  monthlyBudgets MonthlyBudget[]
+  routines            Routine[]
+  dailyLogs           DailyLog[]
+  dungeonBreaks       DungeonBreak[]
+  userTitles          UserTitle[]
+  systemWhispers      SystemWhisper[]
+  gymLogs             GymLog[]
+  userPurchases       UserPurchase[]
+  recoveryLogs        RecoveryLog[]
+  monthlyBudgets      MonthlyBudget[]
+  netWorthAssets      NetWorthAsset[]
+  financeGoals        FinanceGoal[]
+  netWorthSnapshots   NetWorthSnapshot[]
+  purchaseAdvisorLogs PurchaseAdvisorLog[]
 
   @@map("users")
 }
@@ -231,21 +235,26 @@ model MonthlyBudget {
   savingsGoal Float  @default(0) @map("savings_goal")
   xpAwarded   Boolean @default(false) @map("xp_awarded")
 
-  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   fixedExpenses    FixedExpense[]
   variableExpenses VariableExpense[]
+  categoryBudgetCaps CategoryBudgetCap[]
 
   @@unique([userId, month, year])
   @@map("monthly_budgets")
 }
 
 model FixedExpense {
-  id       Int    @id @default(autoincrement())
-  budgetId Int    @map("budget_id")
-  name     String @db.VarChar(100)
-  amount   Float
-  category String @default("OTHER") @db.VarChar(30)
-  isPaid   Boolean @default(false) @map("is_paid")
+  id             Int     @id @default(autoincrement())
+  budgetId       Int     @map("budget_id")
+  name           String  @db.VarChar(100)
+  amount         Float
+  category       String  @default("OTHER") @db.VarChar(30)
+  isPaid         Boolean @default(false) @map("is_paid")
+  isRecurring    Boolean @default(false) @map("is_recurring")
+  emiMonthsTotal Int?    @map("emi_months_total")
+  emiMonthsPaid  Int?    @default(0) @map("emi_months_paid")
+  note           String? @db.VarChar(200)
 
   budget MonthlyBudget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
 
@@ -259,8 +268,81 @@ model VariableExpense {
   amount   Float
   category String   @default("OTHER") @db.VarChar(30)
   date     DateTime @default(now()) @db.Date
+  note     String?  @db.VarChar(200)
 
   budget MonthlyBudget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
 
   @@map("variable_expenses")
+}
+
+model NetWorthAsset {
+  id             Int       @id @default(autoincrement())
+  userId         Int       @map("user_id")
+  name           String    @db.VarChar(100)
+  type           String    @default("OTHER") @db.VarChar(30)
+  amount         Float     @default(0)
+  investedAmount Float?    @default(0) @map("invested_amount")
+  isLiquid       Boolean   @default(true) @map("is_liquid")
+  maturityDate   DateTime? @map("maturity_date") @db.Date
+  notes          String?
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("net_worth_assets")
+}
+
+model FinanceGoal {
+  id            Int       @id @default(autoincrement())
+  userId        Int       @map("user_id")
+  title         String    @db.VarChar(100)
+  targetAmount  Float     @map("target_amount")
+  priority      String    @default("SHORT") @db.VarChar(10)
+  deadline      DateTime? @db.Date
+  completedAt   DateTime? @map("completed_at") @db.Date
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("finance_goals")
+}
+
+model NetWorthSnapshot {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  totalValue Float    @map("total_value")
+  month      Int
+  year       Int
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, month, year])
+  @@map("net_worth_snapshots")
+}
+
+model PurchaseAdvisorLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  itemName   String   @map("item_name") @db.VarChar(100)
+  price      Float
+  verdict    String   @db.VarChar(20)
+  decision   String?  @db.VarChar(20)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("purchase_advisor_logs")
+}
+
+model CategoryBudgetCap {
+  id       Int    @id @default(autoincrement())
+  budgetId Int    @map("budget_id")
+  category String @db.VarChar(30)
+  capAmount Float  @map("cap_amount")
+
+  budget MonthlyBudget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  @@unique([budgetId, category])
+  @@map("category_budget_caps")
 }

@@ -6,6 +6,7 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { AuraEffects } from '@/components/AuraEffects';
 import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SystemLogo, SystemTitle } from '@/components/SystemLogo';
 
 export default function Layout({ children, user }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -41,7 +42,7 @@ export default function Layout({ children, user }) {
             <AuraEffects streak={streak} bestStreak={bestStreak} />
 
             {/* Desktop Sidebar - Strictly hidden on mobile, visible on desktop */}
-            <aside className="hidden md:block w-64 shrink-0 border-r border-zinc-800">
+            <aside className="hidden md:block w-72 shrink-0 border-r border-zinc-800">
                 <AppSidebar streak={streak} />
             </aside>
 
@@ -85,8 +86,11 @@ export default function Layout({ children, user }) {
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col h-full w-full relative overflow-hidden">
                 {/* Mobile Header - Strictly hidden on desktop */}
-                <header className="md:hidden flex-none sticky top-0 z-40 flex items-center justify-between border-b border-zinc-800 bg-zinc-950/90 backdrop-blur px-4 py-3">
-                    <h1 className="font-bold text-lg tracking-tight text-white">SYSTEM</h1>
+                <header className="md:hidden flex-none sticky top-0 z-40 flex items-center justify-between border-b border-zinc-800 bg-zinc-950/90 backdrop-blur px-6 py-5">
+                    <div className="flex items-center gap-5">
+                        <SystemLogo size={36} />
+                        <SystemTitle />
+                    </div>
                     <button
                         onClick={() => setIsMobileMenuOpen(true)}
                         className="p-2 -mr-2 text-zinc-400 hover:text-white rounded-md"
@@ -96,8 +100,8 @@ export default function Layout({ children, user }) {
                 </header>
 
                 {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto p-4 md:p-8">
-                    <div className="max-w-7xl mx-auto space-y-6">
+                <div className="flex-1 overflow-y-auto p-6 md:p-12">
+                    <div className="max-w-7xl mx-auto space-y-10">
                         {children}
                     </div>
                 </div>

@@ -1,4 +1,4 @@
-import { getOrCreateBudget } from '@/app/finance-actions';
+import { getOrCreateBudgetWithCaps } from '@/app/finance-actions';
 import FinanceDashboard from './FinanceDashboard';
 
 export const metadata = { title: 'Treasury — System' };
@@ -8,7 +8,7 @@ export default async function FinancePage() {
     const month = now.getMonth() + 1;
     const year = now.getFullYear();
 
-    const budget = await getOrCreateBudget(month, year);
+    const budget = await getOrCreateBudgetWithCaps(month, year);
 
     return <FinanceDashboard initialBudget={budget} currentMonth={month} currentYear={year} />;
 }
