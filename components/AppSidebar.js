@@ -45,7 +45,7 @@ export function AppSidebar({ onNavigate, streak }) {
             <div className="relative z-10 space-y-4 w-full flex flex-col h-full items-start px-8">
                 <div className=" flex items-center pt-2  space-x-2 justify-start gap-5 w-full">
                     <SystemLogo size={42} glow={true} className="shrink-0 pr-2 drop-shadow-[0_0_20px_rgba(59,130,246,0.2)]" />
-                    <div className="hidden md:block overflow-hidden">
+                    <div className=" md:block overflow-hidden">
                         <SystemTitle />
                     </div>
                 </div>
@@ -67,7 +67,7 @@ export function AppSidebar({ onNavigate, streak }) {
                                 )}
                             >
                                 <item.icon className={cn("h-4 w-4 md:mr-3 transition-transform group-hover:scale-110", isActive && "text-blue-400")} />
-                                <span className="hidden md:block">{item.name}</span>
+                                <span className=" md:block">{item.name}</span>
                             </Link>
                         );
                     })}
@@ -83,13 +83,13 @@ export function AppSidebar({ onNavigate, streak }) {
                             )}
                         >
                             <LogOut className="h-4 w-4 md:mr-3" />
-                            <span className="hidden md:block">Terminate Session</span>
+                            <span className=" md:block">Terminate Session</span>
                         </button>
                     </form>
                 </div>
 
                 <div className=" w-full opacity-30">
-                    <p className="hidden text-[8px] font-mono text-zinc-500 md:block uppercase tracking-[0.2em]">
+                    <p className=" text-[8px] font-mono text-zinc-500 md:block uppercase tracking-[0.2em]">
                         v1.6.0-PROXIMA // SYSTEM
                     </p>
                 </div>
