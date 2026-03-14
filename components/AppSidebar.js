@@ -66,7 +66,7 @@ export function AppSidebar({ onNavigate, streak }) {
                                     "md:w-full"
                                 )}
                             >
-                                <item.icon className={cn("h-4 w-4 md:mr-3 transition-transform group-hover:scale-110", isActive && "text-blue-400")} />
+                                <item.icon className={cn("h-4 w-4 mr-3 transition-transform group-hover:scale-110", isActive && "text-blue-400")} />
                                 <span className=" md:block">{item.name}</span>
                             </Link>
                         );
@@ -82,7 +82,7 @@ export function AppSidebar({ onNavigate, streak }) {
                                 "md:w-full"
                             )}
                         >
-                            <LogOut className="h-4 w-4 md:mr-3" />
+                            <LogOut className="h-4 w-4 mr-3" />
                             <span className=" md:block">Terminate Session</span>
                         </button>
                     </form>
