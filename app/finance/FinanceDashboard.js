@@ -1,16 +1,18 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import {
     Wallet, TrendingDown, ShoppingCart, Landmark, Plus, Trash2,
     CheckCircle2, Circle, Zap, Edit2, BarChart3, FlaskConical,
-    RefreshCw, FileDown, ChevronDown, ChevronUp, Clock, CalendarDays
+    RefreshCw, FileDown, ChevronDown, ChevronUp, Clock, CalendarDays,
+    PiggyBank, X
 } from 'lucide-react';
 import {
     updateBudgetMeta, addFixedExpense, toggleFixedPaid, deleteFixedExpense,
     addVariableExpense, deleteVariableExpense, checkAndAwardSavingsXP,
-    getOrCreateBudgetWithCaps, copyRecurringExpenses
+    getOrCreateBudgetWithCaps, copyRecurringExpenses,
+    settleSavingsToNetWorth, getNetWorthAssets
 } from '@/app/finance-actions';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
@@ -135,6 +137,30 @@ export default function FinanceDashboard({ initialBudget, currentMonth, currentY
     const [savingsModal, setSavingsModal] = useState(false);
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [showAnnual, setShowAnnual] = useState(false);
+
+    // Monthly Settlement
+    const [showSettlement, setShowSettlement] = useState(false);
+    const [settleToAssetId, setSettleToAssetId] = useState('');
+    const [assets, setAssets] = useState([]);
+
+    useEffect(() => {
+        if (showSettlement) {
+            getNetWorthAssets().then(setAssets);
+        }
+    }, [showSettlement]);
+
+    const handleSettle = async () => {
+        if (!settleToAssetId) return;
+        const res = await settleSavingsToNetWorth(budget.id, parseInt(settleToAssetId));
+        if (res.success) {
+            alert(`Successfully settled ${fmt(res.settledAmount)} !`);
+            setShowSettlement(false);
+            const newBudget = await getOrCreateBudgetWithCaps(month, year);
+            setBudget(newBudget);
+        } else {
+            alert("Settlement failed. Ensure you have positive savings.");
+        }
+    };
 
     const totalFixed = (budget?.fixedExpenses || []).reduce((s, e) => s + e.amount, 0);
     const totalVariable = (budget?.variableExpenses || []).reduce((s, e) => s + e.amount, 0);
@@ -281,7 +307,49 @@ export default function FinanceDashboard({ initialBudget, currentMonth, currentY
             )}
 
             {/* Advanced Panel */}
-            {showAdvanced && <AdvancedFinancePanel onClose={() => setShowAdvanced(false)} monthlySavings={actualSavings} />}
+            {showAdvanced && <AdvancedFinancePanel
+                onClose={() => setShowAdvanced(false)}
+                monthlySavings={actualSavings}
+                monthlyExpenses={monthlyExpenses}
+            />}
+
+            {/* Settlement Modal */}
+            {showSettlement && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="font-mono text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2"><PiggyBank size={18} className="text-green-500" /> MONTHLY_SETTLEMENT</h3>
+                            <button onClick={() => setShowSettlement(false)} className="text-zinc-500 hover:text-white"><X size={20} /></button>
+                        </div>
+                        <p className="text-xs font-mono text-zinc-400 mb-6 leading-relaxed">
+                            You have <span className="text-green-400 font-bold">{fmt(actualSavings)}</span> remaining in your budget.
+                            Select a Net Worth asset to deposit these savings into.
+                        </p>
+                        <div className="space-y-4">
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-mono text-zinc-600 uppercase">Target Asset Protocol</label>
+                                <select
+                                    value={settleToAssetId}
+                                    onChange={e => setSettleToAssetId(e.target.value)}
+                                    className="w-full rounded border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white font-mono focus:border-green-500 focus:outline-none"
+                                >
+                                    <option value="">-- SELECT ASSET --</option>
+                                    {assets.filter(a => a.type === 'SAVINGS' || a.type === 'CASH').map(a => (
+                                        <option key={a.id} value={a.id}>{a.name} ({fmt(a.amount)})</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <button
+                                disabled={!settleToAssetId}
+                                onClick={handleSettle}
+                                className="w-full py-3 rounded-lg bg-green-600 hover:bg-green-500 disabled:opacity-30 disabled:hover:bg-green-600 text-white font-mono font-bold text-xs uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(34,197,94,0.2)] active:scale-95"
+                            >
+                                EXECUTE_SETTLEMENT
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Feature #4 — Quick Log (new numpad drawer) */}
             {quickLog && (
@@ -326,6 +394,13 @@ export default function FinanceDashboard({ initialBudget, currentMonth, currentY
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500" />
                             </span>
                         </button>
+                        {actualSavings > 0 && (
+                            <button onClick={() => setShowSettlement(true)}
+                                className="cursor-pointer flex items-center gap-2 rounded-lg border border-green-500/40 bg-green-500/5 px-4 py-2 text-xs font-bold font-mono text-green-400 transition-all hover:bg-green-500/15 hover:border-green-400 group">
+                                <PiggyBank size={14} className="group-hover:animate-bounce" />
+                                SETTLE
+                            </button>
+                        )}
                     </div>
                 </div>
 

@@ -502,3 +502,36 @@ export async function getRecentVariableExpenses(limit = 10) {
         });
     } catch (e) { console.error(e); return []; }
 }
+// ─── SETTLE SAVINGS (#10) ───────────────────────────────────────────────────
+export async function settleSavingsToNetWorth(budgetId, assetId) {
+    const session = await getSession();
+    if (!session) return { success: false };
+
+    try {
+        const budget = await prisma.monthlyBudget.findFirst({
+            where: { id: budgetId, userId: session.userId },
+            include: { fixedExpenses: true, variableExpenses: true }
+        });
+        if (!budget) return { success: false };
+
+        const totalFixed = budget.fixedExpenses.reduce((s, e) => s + e.amount, 0);
+        const totalVariable = budget.variableExpenses.reduce((s, e) => s + e.amount, 0);
+        const savings = budget.income - totalFixed - totalVariable;
+
+        if (savings <= 0) return { success: false, message: "No savings to settle." };
+
+        await prisma.netWorthAsset.update({
+            where: { id: assetId, userId: session.userId },
+            data: { amount: { increment: savings } }
+        });
+
+        // Potentially mark budget as "settled" if we want to prevent double-settling
+        // For now, keeping it simple.
+
+        revalidatePath('/finance');
+        return { success: true, settledAmount: savings };
+    } catch (e) {
+        console.error(e);
+        return { success: false };
+    }
+}
