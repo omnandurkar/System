@@ -11,6 +11,9 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata = {
   title: "System",
   description: "Daily Protocol",
+  icons: {
+    icon: "/icon.png",
+  },
 };
 
 import { getUserStats } from "@/app/actions";
