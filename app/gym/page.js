@@ -1,14 +1,18 @@
 import { getTodaysWorkout } from '@/app/gym-action';
 import { GymChecklist } from '@/components/GymChecklist';
+import { GymGuideModal } from '@/components/GymGuideModal';
 
 export default async function GymPage() {
     const workout = await getTodaysWorkout();
 
     return (
         <div className="mx-auto max-w-3xl space-y-8">
-            <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">GYM PROTOCOL</h1>
-                <p className="text-muted-foreground">"Where men are built."</p>
+            <div className="flex justify-between items-start">
+                <div className="space-y-2">
+                    <h1 className="text-3xl font-bold tracking-tight">GYM PROTOCOL</h1>
+                    <p className="text-muted-foreground">"Where men are built."</p>
+                </div>
+                <GymGuideModal />
             </div>
 
             <div className="rounded-xl border border-border bg-card p-6">
