@@ -163,31 +163,35 @@ function AdminRoutineHeader({ routine, dragHandleProps }) {
 
     if (isEditing) {
         return (
-            <div className="mb-6 flex flex-col gap-4 p-4 rounded-lg bg-muted/30 border border-primary/20">
-                <div className="flex items-center gap-4">
-                    <input
-                        className="flex-1 rounded border border-input bg-background px-3 py-1.5 text-sm font-bold text-white"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                    />
-                    <div className="flex gap-2">
+            <div className="mb-6 flex flex-col gap-3 p-4 rounded-lg bg-muted/30 border border-primary/20">
+                <input
+                    className="w-full rounded border border-input bg-background px-3 py-1.5 text-sm font-bold text-white"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                />
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="flex flex-col gap-1 flex-1">
+                        <label className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Start Time</label>
                         <input
                             type="time"
-                            className="w-32 rounded border border-input bg-background px-2 py-1 text-xs text-white"
+                            className="w-full rounded border border-input bg-background px-2 py-1.5 text-xs text-white"
                             value={startTime}
                             onChange={(e) => setStartTime(e.target.value)}
                         />
+                    </div>
+                    <div className="flex flex-col gap-1 flex-1">
+                        <label className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">End Time</label>
                         <input
                             type="time"
-                            className="w-32 rounded border border-input bg-background px-2 py-1 text-xs text-white"
+                            className="w-full rounded border border-input bg-background px-2 py-1.5 text-xs text-white"
                             value={endTime}
                             onChange={(e) => setEndTime(e.target.value)}
                         />
                     </div>
                 </div>
-                <div className="flex justify-end gap-2">
-                    <button onClick={() => setIsEditing(false)} className="cursor-pointer px-3 py-1 text-xs text-muted-foreground hover:text-white">CANCEL</button>
-                    <button onClick={handleSave} disabled={loading} className="cursor-pointer px-4 py-1 text-xs font-bold bg-primary text-primary-foreground rounded hover:bg-primary/90">SAVE CHANGES</button>
+                <div className="flex justify-end gap-2 pt-1">
+                    <button onClick={() => setIsEditing(false)} className="cursor-pointer px-3 py-1.5 text-xs text-muted-foreground hover:text-white">CANCEL</button>
+                    <button onClick={handleSave} disabled={loading} className="cursor-pointer px-4 py-1.5 text-xs font-bold bg-primary text-primary-foreground rounded hover:bg-primary/90">SAVE CHANGES</button>
                 </div>
             </div>
         );
@@ -242,18 +246,20 @@ function AdminRoutineHeader({ routine, dragHandleProps }) {
                 </div>
             )}
 
-            <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground opacity-30 hover:opacity-100 transition-opacity">
+            <div className="mb-4 flex items-start justify-between gap-2">
+                <div className="flex items-start gap-2 min-w-0">
+                    <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground opacity-30 hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5">
                         <GripHorizontal size={20} />
                     </div>
-                    <h2 className="text-xl font-bold flex items-baseline gap-2">
-                        {routine.name}
-                        <span className="text-sm font-normal text-muted-foreground">({routine.time})</span>
-                    </h2>
+                    <div className="min-w-0">
+                        <h2 className="text-base sm:text-xl font-bold leading-tight break-words">
+                            {routine.name}
+                        </h2>
+                        <span className="text-xs font-mono text-muted-foreground">{routine.time}</span>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 flex-shrink-0">
                     <button onClick={() => setIsEditing(true)} className="cursor-pointer p-2 text-muted-foreground hover:text-blue-400 transition-colors">
                         <Edit2 size={16} />
                     </button>

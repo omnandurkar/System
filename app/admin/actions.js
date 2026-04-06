@@ -41,6 +41,7 @@ export async function getAllRoutinesAndTasks() {
                 return {
                     id: t.id,
                     title: t.title,
+                    description: t.description,
                     exp: t.expValue,
                     repeatDays: days
                 };
@@ -61,7 +62,7 @@ export async function getAllRoutinesAndTasks() {
     }
 }
 
-export async function updateTask(taskId, title, exp, daysMask) {
+export async function updateTask(taskId, title, exp, daysMask, description) {
     const session = await getSession();
     if (!session) return { success: false };
 
@@ -77,7 +78,7 @@ export async function updateTask(taskId, title, exp, daysMask) {
 
         await prisma.task.update({
             where: { id: taskId },
-            data: { title, expValue: exp, daysMask }
+            data: { title, expValue: exp, daysMask, description }
         });
 
         revalidatePath('/');
@@ -89,7 +90,7 @@ export async function updateTask(taskId, title, exp, daysMask) {
     }
 }
 
-export async function addTask(routineId, title, exp, daysMask) {
+export async function addTask(routineId, title, exp, daysMask, description) {
     const session = await getSession();
     if (!session) return { success: false };
 
@@ -101,7 +102,7 @@ export async function addTask(routineId, title, exp, daysMask) {
         if (!routineCheck) return { success: false, error: 'Unauthorized' };
 
         await prisma.task.create({
-            data: { routineId, title, expValue: exp, daysMask }
+            data: { routineId, title, expValue: exp, daysMask, description }
         });
 
         revalidatePath('/');

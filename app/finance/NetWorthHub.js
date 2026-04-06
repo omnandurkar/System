@@ -149,7 +149,7 @@ export default function NetWorthHub({ assets, setAssets, monthlySavings, monthly
     return (
         <div className="space-y-6">
             {/* Top Stat Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                 <MetricCard
                     label="Survival Duration"
                     value={`${survivalMonths} Mo`}
@@ -298,7 +298,7 @@ export default function NetWorthHub({ assets, setAssets, monthlySavings, monthly
                                                         {a.isLiquid ? <span className="text-[8px] text-green-500/80 border border-green-500/20 px-1 rounded-sm">LIQUID</span> : <span className="text-[8px] text-orange-500/80 border border-orange-500/20 px-1 rounded-sm">LOCKED</span>}
                                                     </div>
                                                     {editingId !== a.id && (
-                                                        <div className="flex gap-2 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                                        <div className="flex gap-2 sm:opacity-0 sm:group-hover/item:opacity-100 transition-opacity">
                                                             <button onClick={() => { setEditingId(a.id); setEditAmount(a.amount); }} className="text-zinc-600 hover:text-blue-400 transition-colors"><Edit2 size={10} /></button>
                                                             <button onClick={() => handleDelete(a.id)} className="text-zinc-600 hover:text-red-500 transition-colors"><Trash2 size={10} /></button>
                                                         </div>
@@ -329,7 +329,7 @@ export default function NetWorthHub({ assets, setAssets, monthlySavings, monthly
                             <h4 className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-widest">Initialization Form</h4>
                             <button onClick={() => setShowForm(false)} className="text-zinc-500 hover:text-white"><X size={16} /></button>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-1">
                                 <label className="text-[9px] font-mono text-zinc-600 uppercase">Asset Name</label>
                                 <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. HDFC Salary" className={inp} />

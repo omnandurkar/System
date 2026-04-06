@@ -187,7 +187,7 @@ export async function getTodayTasks() {
                 tasks: filteredTasks.map(t => {
                     const comp = t.taskCompletions[0];
                     return {
-                        id: t.id, title: t.title, exp: t.expValue,
+                        id: t.id, title: t.title, description: t.description, exp: t.expValue,
                         completed: !!(comp && comp.completedAt),
                         isGym: t.title.toLowerCase().includes('gym') || t.title.toLowerCase().includes('boxing'),
                         target: t.targetValue || 1, unit: t.unit, progress: comp ? comp.progress : 0

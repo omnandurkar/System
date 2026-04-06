@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import { toggleTask, updateTaskProgress } from '@/app/actions';
 import { cn } from '@/lib/utils';
-import { Check, Lock } from 'lucide-react';
+import { Check, Lock, Info } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { motion } from 'framer-motion';
 
 export function TaskItem({ task }) {
     const [isPending, setIsPending] = useState(false);
     const [completed, setCompleted] = useState(task.completed);
+    const [showInfo, setShowInfo] = useState(false);
 
     // Progress State
     const [progress, setProgress] = useState(task.progress || 0);
@@ -112,12 +113,42 @@ export function TaskItem({ task }) {
                     </button>
 
                     <div className="flex flex-col">
-                        <span className={cn(
-                            "font-medium tracking-wide transition-colors",
-                            completed ? "text-muted-foreground line-through" : "text-white"
-                        )}>
-                            {task.title}
-                        </span>
+                        <div className="flex items-center gap-2">
+                            <span className={cn(
+                                "font-medium tracking-wide transition-colors",
+                                completed ? "text-muted-foreground line-through" : "text-white"
+                            )}>
+                                {task.title}
+                            </span>
+                            {task.description && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setShowInfo(!showInfo); }}
+                                    onMouseEnter={() => setShowInfo(true)}
+                                    onMouseLeave={() => setShowInfo(false)}
+                                    className="cursor-pointer text-muted-foreground hover:text-primary transition-colors outline-none flex items-center justify-center p-1 rounded-full hover:bg-white/5"
+                                >
+                                    <Info className="h-3.5 w-3.5" />
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Description Box */}
+                        {task.description && (
+                            <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{
+                                    height: showInfo ? 'auto' : 0,
+                                    opacity: showInfo ? 1 : 0,
+                                    marginTop: showInfo ? 8 : 0,
+                                    marginBottom: showInfo ? 4 : 0
+                                }}
+                                className="overflow-hidden"
+                            >
+                                <div className="text-[11px] text-zinc-300/80 bg-black/20 p-2.5 rounded-md border border-white/5 leading-relaxed font-sans italic shadow-inner">
+                                    {task.description}
+                                </div>
+                            </motion.div>
+                        )}
 
                         {/* Status Badges */}
                         {task.isGym && !completed && (

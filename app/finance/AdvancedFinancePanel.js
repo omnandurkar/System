@@ -33,42 +33,57 @@ export default function AdvancedFinancePanel({ onClose, monthlySavings, monthlyE
             <div className="relative w-full h-full max-w-5xl md:h-[85vh] md:rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl overflow-hidden flex flex-col">
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-900 bg-zinc-900/50">
-                    <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-zinc-900 bg-zinc-900/50 gap-3">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={onClose}
+                                className="p-2 -ml-2 rounded-full hover:bg-zinc-800 text-zinc-400 transition-colors"
+                            >
+                                <ChevronLeft size={20} />
+                            </button>
+                            <div>
+                                <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest leading-none mb-1">Advanced Terminal</p>
+                                <h2 className="text-base sm:text-lg font-bold font-mono text-white leading-none">Intelligence Engine</h2>
+                            </div>
+                        </div>
+                        {/* Close button - only show on mobile next to title */}
                         <button
                             onClick={onClose}
-                            className="p-2 -ml-2 rounded-full hover:bg-zinc-800 text-zinc-400 transition-colors"
+                            className="sm:hidden p-2 rounded-full hover:bg-zinc-800 text-zinc-500 hover:text-white transition-all"
                         >
-                            <ChevronLeft size={20} />
+                            <X size={20} />
                         </button>
-                        <div>
-                            <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest leading-none mb-1">Advanced Terminal</p>
-                            <h2 className="text-lg font-bold font-mono text-white leading-none">Intelligence Engine</h2>
+                    </div>
+
+                    <div className="flex items-center justify-between sm:justify-end gap-3">
+                        <div className="flex items-center gap-1 bg-black/40 p-1 rounded-lg border border-zinc-800 w-full sm:w-auto">
+                            <button
+                                onClick={() => setActiveTab('NETWORTH')}
+                                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-mono transition-all ${activeTab === 'NETWORTH' ? 'bg-zinc-800 text-blue-400' : 'text-zinc-500 hover:text-zinc-300'}`}
+                            >
+                                <Landmark size={14} />
+                                <span className="hidden sm:inline">NET_WORTH_HUB</span>
+                                <span className="sm:hidden">NET WORTH</span>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('ADVISOR')}
+                                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-mono transition-all ${activeTab === 'ADVISOR' ? 'bg-zinc-800 text-yellow-400' : 'text-zinc-500 hover:text-zinc-300'}`}
+                            >
+                                <Brain size={14} />
+                                <span className="hidden sm:inline">PURCHASE_ADVISOR</span>
+                                <span className="sm:hidden">ADVISOR</span>
+                            </button>
                         </div>
-                    </div>
 
-                    <div className="flex items-center gap-1 bg-black/40 p-1 rounded-lg border border-zinc-800">
+                        {/* Close button - only show on desktop */}
                         <button
-                            onClick={() => setActiveTab('NETWORTH')}
-                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-mono transition-all ${activeTab === 'NETWORTH' ? 'bg-zinc-800 text-blue-400' : 'text-zinc-500 hover:text-zinc-300'}`}
+                            onClick={onClose}
+                            className="hidden sm:flex p-2 rounded-full hover:bg-zinc-800 text-zinc-500 hover:text-white transition-all shadow-lg"
                         >
-                            <Landmark size={14} /> NET_WORTH_HUB
+                            <X size={20} />
                         </button>
-                        <button
-                            onClick={() => setActiveTab('ADVISOR')}
-                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-mono transition-all ${activeTab === 'ADVISOR' ? 'bg-zinc-800 text-yellow-400' : 'text-zinc-500 hover:text-zinc-300'}`}
-                        >
-                            <Brain size={14} /> PURCHASE_ADVISOR
-                        </button>
-
                     </div>
-
-                    <button
-                        onClick={onClose}
-                        className="p-2 rounded-full hover:bg-zinc-800 text-zinc-500 hover:text-white transition-all shadow-lg"
-                    >
-                        <X size={20} />
-                    </button>
                 </div>
 
                 {/* Content */}

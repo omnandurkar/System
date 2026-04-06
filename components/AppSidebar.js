@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, CheckSquare, Dumbbell, Utensils, Moon, Shield, LogOut, Archive, Terminal, Wallet } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Dumbbell, Utensils, Moon, Shield, LogOut, Archive, Terminal, Wallet, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { logoutUser } from '@/app/auth-actions';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -88,10 +88,13 @@ export function AppSidebar({ onNavigate, streak }) {
                     </form>
                 </div>
 
-                <div className=" w-full opacity-30">
+                <div className=" w-full flex items-center justify-between opacity-40 hover:opacity-100 transition-opacity">
                     <p className=" text-[8px] font-mono text-zinc-500 md:block uppercase tracking-[0.2em]">
                         v1.6.0-PROXIMA // SYSTEM
                     </p>
+                    <Link href="/architect" className="text-zinc-500 hover:text-blue-400 transition-colors p-1" title="The Architect">
+                        <Info className="h-4 w-4" />
+                    </Link>
                 </div>
             </div>
         </div>

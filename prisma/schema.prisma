@@ -293,14 +293,22 @@ model NetWorthAsset {
 }
 
 model FinanceGoal {
-  id            Int       @id @default(autoincrement())
-  userId        Int       @map("user_id")
-  title         String    @db.VarChar(100)
-  targetAmount  Float     @map("target_amount")
-  priority      String    @default("SHORT") @db.VarChar(10)
-  deadline      DateTime? @db.Date
-  completedAt   DateTime? @map("completed_at") @db.Date
-  createdAt     DateTime  @default(now()) @map("created_at")
+  id                Int       @id @default(autoincrement())
+  userId            Int       @map("user_id")
+  title             String    @db.VarChar(100)
+  targetAmount      Float     @map("target_amount")
+  priority          String    @default("SHORT") @db.VarChar(10)
+  deadline          DateTime? @db.Date
+  completedAt       DateTime? @map("completed_at") @db.Date
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  // Short-term wishlist fields
+  description       String?   @db.VarChar(300)
+  currentPrice      Float?    @map("current_price")
+  emiDownPayment    Float?    @default(0) @map("emi_down_payment")
+  emiMonths         Int?      @map("emi_months")
+  emiMonthlyAmount  Float?    @map("emi_monthly_amount")
+  notes             String?   @db.VarChar(500)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

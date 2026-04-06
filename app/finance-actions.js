@@ -237,7 +237,7 @@ export async function getFinanceGoals() {
     } catch (e) { console.error(e); return []; }
 }
 
-export async function addFinanceGoal(title, targetAmount, priority, deadline) {
+export async function addFinanceGoal(title, targetAmount, priority, deadline, description, currentPrice, emiDownPayment, emiMonths, emiMonthlyAmount, notes) {
     const session = await getSession();
     if (!session) return { success: false };
     try {
@@ -246,13 +246,43 @@ export async function addFinanceGoal(title, targetAmount, priority, deadline) {
                 userId: session.userId, title,
                 targetAmount: parseFloat(targetAmount) || 0,
                 priority: priority || 'SHORT',
-                deadline: deadline ? new Date(deadline) : null
+                deadline: deadline ? new Date(deadline) : null,
+                description: description || null,
+                currentPrice: currentPrice ? parseFloat(currentPrice) : null,
+                emiDownPayment: emiDownPayment ? parseFloat(emiDownPayment) : 0,
+                emiMonths: emiMonths ? parseInt(emiMonths) : null,
+                emiMonthlyAmount: emiMonthlyAmount ? parseFloat(emiMonthlyAmount) : null,
+                notes: notes || null,
             }
         });
         revalidatePath('/finance');
         return { success: true };
     } catch (e) { console.error(e); return { success: false }; }
 }
+
+export async function updateShortTermGoal(id, data) {
+    const session = await getSession();
+    if (!session) return { success: false };
+    try {
+        await prisma.financeGoal.updateMany({
+            where: { id, userId: session.userId },
+            data: {
+                title: data.title,
+                targetAmount: parseFloat(data.targetAmount) || 0,
+                deadline: data.deadline ? new Date(data.deadline) : null,
+                description: data.description || null,
+                currentPrice: data.currentPrice ? parseFloat(data.currentPrice) : null,
+                emiDownPayment: data.emiDownPayment ? parseFloat(data.emiDownPayment) : 0,
+                emiMonths: data.emiMonths ? parseInt(data.emiMonths) : null,
+                emiMonthlyAmount: data.emiMonthlyAmount ? parseFloat(data.emiMonthlyAmount) : null,
+                notes: data.notes || null,
+            }
+        });
+        revalidatePath('/finance');
+        return { success: true };
+    } catch (e) { console.error(e); return { success: false }; }
+}
+
 
 export async function deleteFinanceGoal(id) {
     const session = await getSession();
