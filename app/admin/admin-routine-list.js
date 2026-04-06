@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { AdminTaskRow, AddTaskForm, AddRoutineForm } from './admin-client';
 import { updateTaskOrder, updateRoutineOrder, updateRoutine, deleteRoutine } from './actions';
@@ -9,6 +9,10 @@ import { cn } from '@/lib/utils';
 
 export function AdminRoutineList({ initialRoutines }) {
     const [routines, setRoutines] = useState(initialRoutines);
+
+    useEffect(() => {
+        setRoutines(initialRoutines);
+    }, [initialRoutines]);
 
     const onDragEnd = async (result) => {
         const { source, destination, draggableId, type } = result;
